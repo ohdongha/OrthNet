@@ -1,56 +1,87 @@
 #!/usr/bin/env python
+import sys, math, os, subprocess, datetime, argparse
+from argparse import RawTextHelpFormatter
 
-synopsis = "\n\n usage: parse_mclOutput.py <mclOutput> <clusterID_header, default = 'c'>\n\
- \n\
- 1. <mclOutput>\n\
-	- an output of 'mcl', a tab-delimited text file with all members listed, one cluster per line.\n\
- 2. Output\n\
-	- '<mclOutput>.parsed.txt' will be created.\n\
-#	- a header 'memberID\tclusterID' in the first line.\n\
-	- afterwards, <memberID> and <clusterID>, tab-delimited, one member per line.\n\
-	- for <clusterID>, clusters are numbered numerically, from 'c00001' to 'cXXXXX'.\n\
-	- number of '0's will be adjusted based on the number of entire clusters.\n\
-	- with <clusterID_header> specified, <clusterID> will be formatted as '<clusterID_header>_XXXXX'.\n\
-\n\
- by ohdongha@gmail.com \n\
- 20160511 ver 0.1\n"
 
-import sys
-import math
+###################################################
+### 0. script description and parsing arguments ###
+###################################################
+synopsis1 = "\
+  parse mclOutput to a tab-delimited list of geneID and clusterID"
+synopsis2 = "detailed description:\n\
+ 1. Input arguments and options:\n\
+  - the input file, <mclOutput>, is an output of 'mcl', a tab-delimited text\n\
+     with all members (geneIDs) in a cluster listed, one cluster per line.\n\
+  - <clusterID_header> is a short string.  each cluster is named as\n\
+     '<clusterID_header>_XXXXX',\n\
+  - '-H'|'--Header': add a header line 'geneID\t<clusterID_header>'\n\
+     ;default=False,\n\
+  - '-r'|'--remove_speciesID': when geneID is formatted as 'spcsID|geneID',\n\
+     remove 'spcsID|' part; default=False,\n\
+ 2. Output:\n\
+  - write results to '${<mclOutput>%%.txt}.parsed.txt'\n\
+  - clusters are numbered numerically, from '00001' to 'XXXXX'; number of '0's\n\
+     is based on the number of entire clusters (i.e. rjust).\n\
+by ohdongha@gmail.com 20171225 ver 0.2\n\n"
+
+#version_history
+#20171225 ver 0.2 modified to work with orthoMCL results to prepare CLfinder input
+#20160511 ver 0.1 
+
+parser = argparse.ArgumentParser(description = synopsis1, epilog = synopsis2, formatter_class = RawTextHelpFormatter)
+
+# positional parameters
+parser.add_argument('mclOutput', type=argparse.FileType('r'), help="See below")
+parser.add_argument('clusterID_header', type=str, help="See below")
+
+# options
+parser.add_argument('-H', '--Header', action="store_true", default=False)
+parser.add_argument('-r', '--remove_speciesID', action="store_true", default=False)
+
+args = parser.parse_args()
+
+if args.mclOutput.name.endswith(".txt"):
+	output_filename = args.mclOutput.name[:-4] + ".parsed.txt"
+else:	
+	output_filename = args.mclOutput.name + ".parsed.txt"
+
+fout = open(output_filename, 'w')
+
 	
-try: 
-	fin = open(sys.argv[1], "rU")
-	fout = open(sys.argv[1].strip() + ".parsed.txt", "w")
-	if len(sys.argv) > 1:
-		clusterID_header = sys.argv[2]
-	else:
-		clusterID_header = 'default'
-except (ValueError, IndexError) :
-	print synopsis
-	sys.exit(0)
-
-#assign OG group number for genes in <mclOutput> and write to <output.txt>
-#from contextlib import nested
+###############################
+### 1. read input and parse ###
+###############################
 
 clusterID = 1
 clusterID_dict = dict()
 digit_for_clusterID = 0
+geneID = ""
 
-for line in fin:
+for line in args.mclOutput:
 	tok = line.split()
 	for i in range(0, len(tok)):
-		clusterID_dict[tok[i].strip()] = clusterID
+		if args.remove_speciesID == True:
+			geneID = tok[i].strip().split('|')[1]
+		else:
+			geneID = tok[i].strip()
+		clusterID_dict[geneID] = clusterID
 	clusterID = clusterID + 1
-fin.close()
 
 digit_for_clusterID = int(math.log(clusterID,10)) + 1
 
-#fout.write("memberID\tclusterID\n")
-for key, value in sorted(clusterID_dict.iteritems(), key=lambda (k, v): (v,k), reverse=False):
-	if clusterID_header == 'default':
-		fout.write(key + '\tc' + str(clusterID_dict[key]).rjust(digit_for_clusterID, '0') + '\n')
-	else:
-		fout.write(key + '\t' + clusterID_header + '_' + str(clusterID_dict[key]).rjust(digit_for_clusterID, '0') + '\n')
-fout.close()
 
-print "done parsing %d clusters, for %s" % (clusterID, sys.argv[1])
+#######################################
+### 2. read input, parse, and write ###
+#######################################
+clusterID_header = args.clusterID_header + '_'
+
+if args.Header == True:
+	fout.write("geneID\t" + args.clusterID_header + '\n')
+
+for key, value in sorted(clusterID_dict.iteritems(), key=lambda (k, v): (v,k), reverse=False):
+	fout.write(key + '\t' + clusterID_header + str(clusterID_dict[key]).rjust(digit_for_clusterID, '0') + '\n')
+
+print "done parsing %d clusters, for %s" % (clusterID, args.mclOutput.name)
+
+args.mclOutput.close()
+fout.close()

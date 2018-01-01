@@ -42,9 +42,10 @@ synopsis2 = "detailed description:\n\
   - if genes in <4OrthNet_input> and 'BestHitPairs' are in the form of\n\
      '<spcsID>|<geneID>', only the <geneID> portion is used.\n\
   - assumes no header in 'BestHitPairs' files.\n\n\
- by ohdongha@gmail.com 20170316 ver 0.1.2\n"
+ by ohdongha@gmail.com 20171225 ver 0.1.3\n"
  
 #version_history
+#20171225 ver 0.1.3 # if <Project> argument ends with '.list', just ignore it
 #20170316 ver 0.1.2 # 'translocated (tlc)' is now called 'transposed (tr)' 
 #20160815 ver 0.1.1 # modified to work with 'update_OrthNet_after_mcl.py'.
 #20160801 ver 0.1 # print all lines from 'BestHitPairs', with updated preference in the third column.
@@ -78,7 +79,12 @@ output_BestHitPairs_filename_format = path_BestHitPairs_fixed + "BestHits__%s__v
 ########################################
 ### 1. reading the species list file ###
 ########################################
-fin_SpcsList = open(args.Project + '.list')
+projectID = args.Project
+try:
+	fin_SpcsList = open(projectID + '.list', 'r')
+except IOError:
+	fin_SpcsList = open(projectID, 'r')
+	projectID = projectID[:-5]	
 spcsID_list = []
 
 print "\nreading the list file:" + fin_SpcsList.name
