@@ -58,7 +58,7 @@ CLfinder-OrthNet accept three inputs  1. gene model coordinates (genome annotati
 - If there is no better way to select representative gene/transcript/isoform, `parse_gtf_2table.py -c` will collapse all gene models that have overlapping or identical coordinates, keeping only the longest one.  See the script help for the detail. 
 - After obtaining the _.gtfParsed.txt_ file, make sure that only gene models included in this file are used for generating Input #2 and #3.  *GeneIDs* should be consistent over all three inputs.
 
-### Input #2 Within-species paralog groups
+### 2. Input #2 Within-species paralog groups
 1. If OrthoMCL is available, you can run it for each genome and get "in-paralog" groups.  
 
 ...
