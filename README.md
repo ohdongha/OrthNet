@@ -22,20 +22,27 @@ A pipeline to detect co-linearity in gene orders among multiple closely-related 
 - genome or gene model sequences (.fasta)
 ### Installing
 Copy all python scripts to a folder, add the folder to $PATH, and made them executable:
+
 `export PATH=<folder>:$PATH # in bash, add this to ~/.bashrc`
+
 `chmod 755 <folder>/*.py`
 
 ## Preparing input files
 CLfinder-OrthNet accept three inputs  1. gene model coordinates (genome annotation), 2. within-species paralog groups, and 3. between species "best-hit" pairs for all pair of genomes
 ### 0. List of genomes
 *ProjectID.list* includes all *GenomeIDs* that you want to compare, one *GenomeID* per line.  I recommend *GenomeIDs* to be simple (2~5 alphanumeric) and *ProjectID* to be unique by adding the date. For example, *180101_crucifers* will be the *ProjectID* to compare six crucifer genomes included in the tutorial:
+
 `echo 'Aly Ath Cru Esa Sir Spa' | tr ' ' '\n' > 180101_Crucifers.list`
 
 ### 1. Input #1 Gene model coordinates (genome annotation)
 1. If genome annotation was given as a _.gff_ or _.gff3_ file, convert it to a _.gtf_ file:
+
 `gffread input.gff -T -o output.gtf`
+
 If converting multiple files:
+
 `for file in *.gff; do gffread $file -T -o ${file%%.gff}.gtf; done`
+
 2. Convert the _.gtf_ file into a _.gtfParsed.txt_ file.  Name the output file as "GenomeID.gtfParsed.txt".  Repeat for all *GenomeIDs*:
 `parse_gtf_2table.py -r input.gtf GenomeID.gtfParsed.txt > GenomeID.gtfParsed.log`
 ##### Important: one representative gene model per locus
