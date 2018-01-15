@@ -12,11 +12,11 @@ A pipeline to detect co-linearity in gene orders among multiple closely-related 
 - pyhton 2.x - all scripts were written in python 2.7, in linux.
 - mcl (https://github.com/JohannesBuchner/mcl) - other clustering options will be added in future updates.
 - I assume users are familiar with basic linux commands.
-- Optional:
-	- gffread (https://github.com/gpertea/gffread) - if you start with a .gff file to generate input #1
-	- orthoMCL (http://orthomcl.org/common/downloads/software/) - to generate input #2 (see below for an alternative) 
-	- blast+ (https://www.ncbi.nlm.nih.gov/books/NBK1762/) - to generate input #3
-	- Cytoscape (http://cytoscape.org/) - to visualize and print OrthNets
+- Optional
+	* gffread (https://github.com/gpertea/gffread) - if you start with a .gff file to generate input #1
+	* orthoMCL (http://orthomcl.org/common/downloads/software/) - to generate input #2 (see below for an alternative) 
+	* blast+ (https://www.ncbi.nlm.nih.gov/books/NBK1762/) - to generate input #3
+	* Cytoscape (http://cytoscape.org/) - to visualize and print OrthNets
 
 ### Prerequisites -genome data
 - genome annotation of "representative" gene models (.gtf) - see below on how to get "representative" gene models
