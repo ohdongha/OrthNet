@@ -61,4 +61,4 @@ CLfinder-OrthNet accept three inputs  1. gene model coordinates (genome annotati
 ### 2. Input #2 Within-species paralog groups
 1. If OrthoMCL is available, you can run it for each genome and get "in-paralog" groups.  
 
-...
+... to be continued soon, 
