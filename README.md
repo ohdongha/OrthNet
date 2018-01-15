@@ -37,14 +37,16 @@ CLfinder-OrthNet accept three inputs  1. gene model coordinates (genome annotati
 ### 1. Input #1 Gene model coordinates (genome annotation)
 1. If genome annotation was given as a _.gff_ or _.gff3_ file, convert it to a _.gtf_ file:
 
-`gffread input.gff -T -o output.gtf`
+	`gffread input.gff -T -o output.gtf`
 
-If converting multiple files:
+	If converting multiple files:
 
-`for file in *.gff; do gffread $file -T -o ${file%%.gff}.gtf; done`
+	`for file in *.gff; do gffread $file -T -o ${file%%.gff}.gtf; done`
 
 2. Convert the _.gtf_ file into a _.gtfParsed.txt_ file.  Name the output file as "GenomeID.gtfParsed.txt".  Repeat for all *GenomeIDs*:
-`parse_gtf_2table.py -r input.gtf GenomeID.gtfParsed.txt > GenomeID.gtfParsed.log`
+
+	`parse_gtf_2table.py -r input.gtf GenomeID.gtfParsed.txt > GenomeID.gtfParsed.log`
+
 ##### Important: one representative gene model per locus
 - To detect co-linearity correctly, CLfinder needs genome coordinates of one gene model per each locus. If possible, select the gene model annotatoin file that inculdes "primary transcript" or "representative gene/isoform".
 - `parse_gtf_2table.py -r` reports all gene models in the *.gtf* files whose genomic coordinates are overlapping.  If number of such gene models are small (less than <1%), probably the genome annotation has only representative gene models.
