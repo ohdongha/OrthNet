@@ -19,7 +19,7 @@ A pipeline to detect co-linearity in gene orders among multiple closely-related 
 	* Cytoscape (http://cytoscape.org/) - to visualize and print OrthNets
 
 ### Prerequisites -genome data
-- genome annotation of "representative" gene models (.gtf) - see below on how to get "representative" gene models
+- genome annotation of "representative" gene models (_.gff_, .gff3, or .gtf)
 - genome or gene model sequences (.fasta)
 
 ### Installing
@@ -38,8 +38,9 @@ CLfinder-OrthNet accept three inputs  1. gene model coordinates (genome annotati
 `echo 'Aly Ath Cru Esa Sir Spa' | tr ' ' '\n' > 180101_Crucifers.list`
 
 
-### 1. Input #1 Gene model coordinates (genome annotation)
-1. If genome annotation was given as a _.gff_ or _.gff3_ file, convert it to a _.gtf_ file:
+### 1. Input #1: gene model coordinates (genome annotation)
+For each genome, coordinates of representative gene models were parsed from genome annotations in *.gtf* format, as follows:
+1. If genome annotation is in _.gff_ or _.gff3_ format, convert it to _.gtf_:
 
 	`gffread input.gff -T -o output.gtf`
 
@@ -47,7 +48,7 @@ CLfinder-OrthNet accept three inputs  1. gene model coordinates (genome annotati
 
 	`for file in *.gff; do gffread $file -T -o ${file%%.gff}.gtf; done`
 
-2. Convert the _.gtf_ file into a _.gtfParsed.txt_ file.  Name the output file as "GenomeID.gtfParsed.txt".  Repeat for all *GenomeIDs*:
+2. Parse the _.gtf_ file into a _.gtfParsed.txt_ file.  Name the output file as "GenomeID.gtfParsed.txt".  Repeat for all *GenomeIDs*:
 
 	`parse_gtf_2table.py -r input.gtf GenomeID.gtfParsed.txt > GenomeID.gtfParsed.log`
 
@@ -58,7 +59,37 @@ CLfinder-OrthNet accept three inputs  1. gene model coordinates (genome annotati
 - If there is no better way to select representative gene/transcript/isoform, `parse_gtf_2table.py -c` will collapse all gene models that have overlapping or identical coordinates, keeping only the longest one.  See the script help for the detail. 
 - After obtaining the _.gtfParsed.txt_ file, make sure that only gene models included in this file are used for generating Input #2 and #3.  *GeneIDs* should be consistent over all three inputs.
 
-### 2. Input #2 Within-species paralog groups
-1. If OrthoMCL is available, you can run it for each genome and get "in-paralog" groups.  
+### 2. Input #2: within-species paralog groups
+A tab-delimited text file with *GeneID* and paralog group ID (*PGID*), one gene per line, for each genome.  Two example options: 
+1. If orthoMCL is available, you can run it for each genome and get "in-paralog" groups. Convert the orthoMCL output (_mclOutput.txt_) to input #2:
 
-... to be continued soon, 
+	`parse_mclOutput.py -rH mclOutput.txt PG`	
+
+	if converting multiple orthoMCL output files named as *mclOutput_GenomeID.txt* for genomes in *ProjectID.list*:
+	
+	`while read GenomeID; do parse_mclOutput.py mclOutput_${GenomeID}.txt PG -rH; done < ProjectID.list`
+
+	The resulting *mclOutput_GenomeID.parsed.txt* can be used as input #2.
+#### Alternative way to obtain input #2:  
+- Input #2 can be also generate from all-by-all blast results for either representative CDS or deduced amino acid sequences of each genome.
+- For example, if the representative CDS sequences for _GenomeID_ is _GenomeID.cds.rep.fa, first run an all-by-all blastn as follows:
+
+	`makeblastdb -in GenomeID.cds.rep.fa -dbtype nucl`
+	
+	`blastn -evalue 1e-5 -max_target_seqs 100000 -outfmt '6 std qlen slen stitle' -db GenomeID.cds.rep.fa -query GenomeID.cds.rep.fa -out out__GenomeID.cds__vs__self.txt`
+	
+- The blast output can be filtered by `consolidate_blast_HSPs.py` with user-defined tresholds for High-scoring Segment Pair (HSP) coverage on query, subject, or both.  See `consolidate_blast_HSPs.py -h` for details.
+- Using `create_hard_clusters.py`, filtered blast output is used for identifying paralog groups   See `create_hard_clusters.py -h` for details.
+
+2. Add input #2 to input #1 for each genome.  For exmaple, if input #1 and #2 for *GenomeID* is named *GenomeID.gtfParsed.txt* and *GenomeID.PG*, respectively:
+
+	`join_files_by_NthCol.py GenomeID.gtfParsed.txt 1 1 GenomeID.PG GenomeID.gtfParsed.PG.txt`
+	
+	if converting multiple genomes listed in *ProjectID.list*:
+
+	`while read GenomeID; do join_files_by_NthCol.py ${GenomeID}.gtfParsed.rep.txt 1 1 ${GenomeID}.PG ${GenomeID}.gtfParsed.PG.txt; done < ProjectID.list`
+
+### 3. Input #3: between-species best-hit pairs
+to be continued ...
+
+
