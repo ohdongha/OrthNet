@@ -79,7 +79,7 @@ A tab-delimited text file with *GeneID* and paralog group ID (*PGID*), one gene 
 	`blastn -evalue 1e-5 -max_target_seqs 100000 -outfmt '6 std qlen slen stitle' -db GenomeID.cds.rep.fa -query GenomeID.cds.rep.fa -out out__GenomeID.cds__vs__self.txt`
 	
 - The blast output can be filtered by `consolidate_blast_HSPs.py` with user-defined tresholds for High-scoring Segment Pair (HSP) coverage on query, subject, or both.  See `consolidate_blast_HSPs.py -h` for details.
-- Using `create_hard_clusters.py`, filtered blast output is used for identifying paralog groups   See `create_hard_clusters.py -h` for details.
+- Using `create_hard_clusters.py`, paralog groups are identified bassed on filtered blast output.  See `create_hard_clusters.py -h` for details.
 
 2. Add input #2 to input #1 for each genome.  For exmaple, if input #1 and #2 for *GenomeID* is named *GenomeID.gtfParsed.txt* and *GenomeID.PG*, respectively:
 
