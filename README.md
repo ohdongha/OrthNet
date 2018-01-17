@@ -60,7 +60,7 @@ For each genome, coordinates of representative gene models were parsed from geno
 	parse_gtf_2table.py -r input.gtf GenomeID.gtfParsed.txt > GenomeID.gtfParsed.log
 	```
 
-	#### Important! Genomes should contain one representative gene/transcript model per each locus. See [Note 1](### 1. Obtaining one representative gene model per locus)
+	#### Important! Genomes should contain one representative gene/transcript model per each locus. See [Note 1](https://github.com/ohdongha/CL_finder#1-obtaining-one-representative-gene-model-per-locus)
 
 
 ### 2. Input #2: within-species paralog groups
@@ -115,7 +115,7 @@ A tab-delimited text file with the GeneID of the query gene and its 'best-hit' o
 
 	After running all pairwise blastn, you will have output files named as *out\__GenomeID1\__vs\__GenomeID2.bln.txt*, for all pairs with GenomeID1 != GenomeID2.
 
-	If the user choose to add filters for HSP_cov and/or add HSP_cov and HSP_idn (see `consolidate_blast_HSPs -h`) in the co-linearity information, see [Note 2](### 2. Filtering 'best-hit' pairs based on blast HSP_cov), instead of proceeding to the item 3 below.
+	If the user choose to add filters for HSP_cov and/or add HSP_cov and HSP_idn (see `consolidate_blast_HSPs -h`) in the co-linearity information, see [Note 2](https://github.com/ohdongha/CL_finder#2-filtering-best-hit-pairs-based-on-blast-hsp_cov), instead of proceeding to the item 3 below.
 
 3. Convert the blastn output to input #3:
 	```
