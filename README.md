@@ -134,7 +134,7 @@ At this point, the following should be ready:
 Now CLfinder module is ready to run.
 
 1. Add *LocusID* and tandem duplication information to *GenomeID_gtfParsed.PG.txt*:
-```
+
 working ... 
 
 
