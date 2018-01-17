@@ -9,6 +9,15 @@ A pipeline to detect co-linearity in gene orders among multiple closely-related 
 	* orthologs transposed and duplicated uniquely in a genome or a subset of genomes, etc.
 - CLfinder and OrthNet are separable modules.  Users can use only the CLfinder module to quickly obtain co-linearity information and a summary matrix of the pairwise comparisons for multiple genomes.  The OrthNet module is optimized for working with CLfinder, but also can accept co-linearity information from other programs.
 
+Contents:
+	[**Before starting**](https://github.com/ohdongha/CL_finder#before-starting)
+	[**Preparing input files**](https://github.com/ohdongha/CL_finder#preparing-input-files)
+	[**Running CLfinder**](https://github.com/ohdongha/CL_finder#running-clfinder)
+	[**Running OrthNet**](https://github.com/ohdongha/CL_finder#running-orthnet)
+	[**Searching OrthNets**](https://github.com/ohdongha/CL_finder#searching-orthnets)
+	[**Notes**](https://github.com/ohdongha/CL_finder#notes)
+	[**Tutorial**](https://github.com/ohdongha/CL_finder#tutorial)
+		
 ---
 ## Before starting
 ### Prerequisites - programs
@@ -136,8 +145,11 @@ Now CLfinder module is ready to run.
 
 working ... 
 
+---
+## Running OrthNet
 
-
+---
+## Searching OrthNets
 
 ---
 ## Notes
@@ -150,3 +162,6 @@ working ...
 
 ### 2. Filtering 'best-hit' pairs based on blast HSP_cov
 - coming soon
+
+---
+## Tutorials
