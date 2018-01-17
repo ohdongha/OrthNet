@@ -109,6 +109,7 @@ while read g; do makeblastdb -in ${g}.cds.rep.fa -dbtype nucl; done < ProjectID.
 ```
 create_pairwiseBLAST_commands.py ProjectID.list -n "-task blastn -evalue 1e-5 -max_target_seqs 10 -outfmt '6 std qlen slen'" > ProjectID_pairwiseBLASTN.sh
 ```
+
 	Check `create_pairwiseBLAST_commands.py -h` for detailed options to designate folders for CDS sequences or blastn output files, as well as options to use blastp on deduced peptide sequences instead.
 
 	Once blast commands were created, users will want to run it in the background (e.g. using the linux _screen_ command) and multiplex if possible, depending on the computational resource.  Users can add *-num_threads* option to the string given with *-n* option in the example above.
