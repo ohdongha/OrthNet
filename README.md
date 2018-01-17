@@ -98,18 +98,17 @@ A tab-delimited text file with *GeneID* and paralog group ID (*PGID*), one gene 
 A tab-delimited text file with the GeneID of the query gene and its 'best-hit' or best-hit candidate GeneID in the target genome, one pair per line, for all possible pairs of genomes in *ProjectID.list*.  
 
 1. For all *GenomeIDs* in *ProjectID.list*, create a blast database for the representative CDS sequences in *GenomeID.cds.rep.fa*:
-```
-makeblastdb -in GenomeID.cds.rep.fa -dbtype nucl
-```
-To process multiple genomes listed in *ProjectID.list*:
-```
-while read g; do makeblastdb -in ${g}.cds.rep.fa -dbtype nucl; done < ProjectID.list
-```
+	```
+	makeblastdb -in GenomeID.cds.rep.fa -dbtype nucl
+	```
+	To process multiple genomes listed in *ProjectID.list*:
+	```
+	while read g; do makeblastdb -in ${g}.cds.rep.fa -dbtype nucl; done < ProjectID.list
+	```
 2. Create blast commands for all possible pair of genomes in *ProjectID.list*.  For blastn:
-```
-create_pairwiseBLAST_commands.py ProjectID.list -n "-task blastn -evalue 1e-5 -max_target_seqs 10 -outfmt '6 std qlen slen'" > ProjectID_pairwiseBLASTN.sh
-```
-
+	```
+	create_pairwiseBLAST_commands.py ProjectID.list -n "-task blastn -evalue 1e-5 -max_target_seqs 10 -outfmt '6 std qlen slen'" > ProjectID_pairwiseBLASTN.sh
+	```
 	Check `create_pairwiseBLAST_commands.py -h` for detailed options to designate folders for CDS sequences or blastn output files, as well as options to use blastp on deduced peptide sequences instead.
 
 	Once blast commands were created, users will want to run it in the background (e.g. using the linux _screen_ command) and multiplex if possible, depending on the computational resource.  Users can add *-num_threads* option to the string given with *-n* option in the example above.
@@ -119,9 +118,9 @@ create_pairwiseBLAST_commands.py ProjectID.list -n "-task blastn -evalue 1e-5 -m
 	If the user choose to add filters for HSP_cov and/or add HSP_cov and HSP_idn (see `consolidate_blast_HSPs -h`) in the co-linearity information, see [Note 2](### 2. Filtering 'best-hit' pairs based on blast HSP_cov), instead of proceeding to the item 3 below.
 
 3. Convert the blastn output to input #3:
-```
-for f in out__*__vs__*.bln.txt; do f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.bln.txt}.list; done
-```
+	```
+	for f in out__*__vs__*.bln.txt; do f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.bln.txt}.list; done
+	```
 	This will generate input #3 for *GenomeID1* and *GenomeID2* as *BestHits\__GenomeID1\__vs\__GenomeID2.list* for all genome pairs.  As long as the file names and formats are correct, input #3 can be created by other methods to detect similar sequences, such as blastp.
 
 ---
