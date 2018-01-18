@@ -9,15 +9,15 @@ A pipeline to detect co-linearity in gene orders among multiple closely-related 
 	* orthologs transposed and duplicated uniquely in a genome or a subset of genomes, etc.
 - CLfinder and OrthNet are separable modules.  Users can use only the CLfinder module to quickly obtain co-linearity information and a summary matrix of the pairwise comparisons for multiple genomes.  The OrthNet module is optimized for working with CLfinder, but also can accept co-linearity information from other programs.
 
-Contents:
- [**Before starting**](https://github.com/ohdongha/CL_finder#before-starting); 
- [**Preparing input files**](https://github.com/ohdongha/CL_finder#preparing-input-files); 
- [**Running CLfinder**](https://github.com/ohdongha/CL_finder#running-clfinder); 
- [**Running OrthNet**](https://github.com/ohdongha/CL_finder#running-orthnet); 
- [**Searching OrthNets**](https://github.com/ohdongha/CL_finder#searching-orthnets); 
- [**Notes**](https://github.com/ohdongha/CL_finder#notes); 
+Jump to:
+ [**Before starting**](https://github.com/ohdongha/CL_finder#before-starting);
+ [**Preparing input files**](https://github.com/ohdongha/CL_finder#preparing-input-files);
+ [**Running CLfinder**](https://github.com/ohdongha/CL_finder#running-clfinder);
+ [**Running OrthNet**](https://github.com/ohdongha/CL_finder#running-orthnet);
+ [**Searching OrthNets**](https://github.com/ohdongha/CL_finder#searching-orthnets);
+ [**Notes**](https://github.com/ohdongha/CL_finder#notes);
  [**Tutorial**](https://github.com/ohdongha/CL_finder#tutorial)
-		
+
 ---
 ## Before starting
 ### Prerequisites - programs
@@ -125,26 +125,48 @@ A tab-delimited text file with the GeneID of the query gene and its 'best-hit' o
 	After running all pairwise blastn, you will have output files named as *out\__GenomeID1\__vs\__GenomeID2.bln.txt*, for all pairs with GenomeID1 != GenomeID2.
 
 	If the user choose to add filters for HSP_cov and/or add HSP_cov and HSP_idn (see `consolidate_blast_HSPs -h`) in the co-linearity information, see [Note 2](https://github.com/ohdongha/CL_finder#2-filtering-best-hit-pairs-based-on-blast-hsp_cov), instead of proceeding to the item 3 below.
-
 3. Convert the blastn output to input #3:
 	```
 	for f in out__*__vs__*.bln.txt; do f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.bln.txt}.list; done
+	mkdir ./BHPairs.bln; mv BestHits__*.list ./BHPairs.bln
 	```
-	This will generate input #3 for *GenomeID1* and *GenomeID2* as *BestHits\__GenomeID1\__vs\__GenomeID2.list* for all genome pairs.  As long as the file names and formats are correct, input #3 can be created by other methods to detect similar sequences, such as blastp.
+	This will generate input #3 for *GenomeID1* and *GenomeID2* as *BestHits\__GenomeID1\__vs\__GenomeID2.list* for all genome pairs in the folder _./BHPairs.bln_ (the scripts work for any folder name; .bln stands for blastn).  As long as the file names and formats are correct, input #3 can be created by other methods to detect similar sequences, such as blastp.
 
 ---
 ## Running CLfinder
 At this point, the following should be ready:
 - List of _GenomeIDs_ in _ProjectID.list_
-- Input #1 and #2 for each _GenomeID_, as *GenomeID_gtfParsed.PG.txt*
-- Input #3 for all pairs of genomes, as *BestHits\__GenomeID1\__vs\__GenomeID2.list*
+- Combined input #1 and #2 for each _GenomeID_, as *GenomeID_gtfParsed.PG.txt*
+- Input #3 for all pairs of genomes, as *BestHits\__GenomeID1\__vs\__GenomeID2.list* all located in the folder _./BHPairs.bln_.
 
-Now CLfinder module is ready to run.
+Now CLfinder module is ready to run:
 
 1. Add *LocusID* and tandem duplication information to *GenomeID_gtfParsed.PG.txt*:
+	```
+	while read g; do TD_finder.py ${g}.gtfParsed.PG.txt $g 4 ${g}.gtfParsed.TD.txt; done < ProjectID.list > ProjectID_TD.log 2>&1
+	```
+	This will identify all paralogs in the same paralog group and within 4 loci (min_TD_loci) as tandem duplicated (_td_), and report the number of _td_ events and genes in those events as _ProjectID_TD.log_. Users can modify the *min_TD_loci* parameter as needed. _GenomeID.gtfParsed.TD.txt_ files now include columns for _td_ events as well as numerical _LocusIDs_ for each genome.
 
-working ... 
+2. Run CLfinder:
+	```
+	CL_finder_multi.py ProjectID -nr -T .gtfParsed.TD.txt -b ./BHPairs.bln -W 20 -N 3 -G 20 -o ./ProjectID_bln
+	```
+	This will run CLfinder for each _GenomeID_, comparing it to all other genomes, and report (with _-r_ option) numbers of co-linear, lineage-specific, and transposed best-hit pairs, shared _td_ events, etc. Users can modify the _window_size_ (_-W_), _num_loci_trshld_ (_-N_), and _gap_loci_trshld_ (_-G_) as needed.  With _-n_ option, it also create an output _ProjectID.4OrthNet.input_ which can be used for updating best-hit pairs (next section) or building OrhNets.  See `CL_finder_multi.py -h` for details on options and parameters.
 
+3. Update best-hit pairs:
+	```
+	update_BestHitPairs.py ProjectID ./ProjectID_bln/ProjectID.4OrthNet.input -b BHPairs.bln -o BHPairs.bln.1
+	```
+	CLfinder can search for an alternative best-hit among many best-hit candidates with less similarity scores, if such alternative best-hit can achieve a reciprocal best-hit pairs.  This process will update best-hit pairs to prefer reciprocal relationship.
+	```
+	CL_finder_multi.py ProjectID -unrp -T .gtfParsed.TD.txt -b BHPairs.bln.1 -o ProjectID_bln.1 -W 20 -N 3 -G 20
+	```
+	Re-run CLfinder based on the updated best-hit pairs (_-u_ option).  With _-p_ option, CLfinder also print reciprocal best-hit pairs and co-linearity between them for all pairs of genomes, which can be useful for determining synonymous (_Ks_) or four degenerated site (_4d_) substitution rates between pairs ([Note 3](URL)).
+4. Creating a summary report for all pairwise CLfinder analyses
+ 	```
+	create_CLfm_summary.py ProjectID CLfinder_summary.txt -p ProjectID_bln.1
+	```
+	This script looks into a CLfinder output folder and create a summary matrix for all query-target genome pairs, reporting number of co-linear (_cl_), lineage-specific (_ls_), transposed (_tr_), and not determined (_nd_) due to too fragmented genome scaffold assembly.  See `create_CLfm_summary.py -h` for details.
 ---
 ## Running OrthNet
 
@@ -161,6 +183,9 @@ working ...
 - After obtaining the _.gtfParsed.txt_ file, make sure that only gene models included in this file are used for generating Input #2 and #3.  *GeneIDs* should be consistent over all three inputs.
 
 ### 2. Filtering 'best-hit' pairs based on blast HSP_cov
+- coming soon
+
+### 3. Calculating substitution rates between best-hit pairs with codeml
 - coming soon
 
 ---
