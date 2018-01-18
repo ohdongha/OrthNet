@@ -45,13 +45,13 @@ chmod 755 <folder>/*.py
 ---
 ## Preparing input files
 CLfinder-OrthNet accept three inputs  1. gene model coordinates (genome annotation), 2. within-species paralog groups, and 3. between species "best-hit" pairs for all pair of genomes
-### 0. List of genomes
+### ProjectID and list of genomes
 *ProjectID.list* includes all *GenomeIDs* that you want to compare, one per line.  I recommend *GenomeIDs* to be simple (2~5 alphanumeric) and *ProjectID* to be unique by adding date or time-stamp. For example, below, *180101_crucifers* will be the *ProjectID* to compare six crucifer genomes included in the tutorial:
 ```
 echo 'Aly Ath Cru Esa Sir Spa' | tr ' ' '\n' > 180101_Crucifers.list
 ```
 
-### 1. Input #1: gene model coordinates (genome annotation)
+### Input #1: gene model coordinates (genome annotation)
 For each genome, coordinates of representative gene models were parsed from genome annotations in *.gtf* format.  The parsed file will have strand, coordinates, number of exons, and length of the mRNA and CDS (ORF), one gene model per line.
 
 1. If genome annotation is in _.gff_ or _.gff3_ format, convert it to _.gtf_:
@@ -72,7 +72,7 @@ For each genome, coordinates of representative gene models were parsed from geno
 	#### Important! Genomes should contain one representative gene/transcript model per each locus. See [Note 1](https://github.com/ohdongha/CL_finder#1-obtaining-one-representative-gene-model-per-locus)
 
 
-### 2. Input #2: within-species paralog groups
+### Input #2: within-species paralog groups
 A tab-delimited text file with *GeneID* and paralog group ID (*PGID*), one gene per line, for each genome.  Input #2 can be prepared by various methods.  Below are two example options:
 1. **method #1** If orthoMCL is available, you can run it for each genome and get "in-paralog" groups. Convert the orthoMCL output (_mclOutput_GenomeID.txt_) to input #2:
 	```
@@ -103,7 +103,7 @@ A tab-delimited text file with *GeneID* and paralog group ID (*PGID*), one gene 
 	while read g; do join_files_by_NthCol.py ${g}.gtfParsed.rep.txt 1 1 ${g}.PG ${g}.gtfParsed.PG.txt; done < ProjectID.list
 	```
 
-### 3. Input #3: between-species best-hit pairs
+### Input #3: between-species best-hit pairs
 A tab-delimited text file with the GeneID of the query gene and its 'best-hit' or best-hit candidate GeneID in the target genome, one pair per line, for all possible pairs of genomes in *ProjectID.list*.  
 
 1. For all *GenomeIDs* in *ProjectID.list*, create a blast database for the representative CDS sequences in *GenomeID.cds.rep.fa*:
@@ -161,14 +161,38 @@ Now CLfinder module is ready to run:
 	```
 	CL_finder_multi.py ProjectID -unrp -T .gtfParsed.TD.txt -b BHPairs.bln.1 -o ProjectID_bln.1 -W 20 -N 3 -G 20
 	```
-	Re-run CLfinder based on the updated best-hit pairs (_-u_ option).  With _-p_ option, CLfinder also print reciprocal best-hit pairs and co-linearity between them for all pairs of genomes, which can be useful for determining synonymous (_Ks_) or four degenerated site (_4d_) substitution rates between pairs ([Note 3](URL)).
-4. Creating a summary report for all pairwise CLfinder analyses
+	Re-run CLfinder based on the updated best-hit pairs (_-u_ option).  With _-p_ option, CLfinder also print reciprocal best-hit pairs and co-linearity between them for all pairs of genomes, which can be useful for determining synonymous (_Ks_) or four degenerated site (_4d_) substitution rates between pairs ([Note 3](https://github.com/ohdongha/CL_finder#3-calculating-substitution-rates-between-best-hit-pairs-with-codeml)).
+4. Creating a summary report for all pairwise CLfinder analyses:
  	```
 	create_CLfm_summary.py ProjectID CLfinder_summary.txt -p ProjectID_bln.1
 	```
 	This script looks into a CLfinder output folder and create a summary matrix for all query-target genome pairs, reporting number of co-linear (_cl_), lineage-specific (_ls_), transposed (_tr_), and not determined (_nd_) due to too fragmented genome scaffold assembly.  See `create_CLfm_summary.py -h` for details.
 ---
 ## Running OrthNet
+The OrthNet module accept a tab-delimited text file with two genes, i.e., best-hit pairs from different genomes or tandem duplicated paralogs from the same genome, and their co-linearity relationship. The CLfinder model generate such a file (_ProjectID.4OrthNet.input_), as described above.  As long as formatted correctly, the OrthNet modeule can accept co-linearity information from other pipeline or sources.  See `create_OrthNet.py -h` for the required input file format.
+
+1. Create initial hard clusters:
+	```
+	create_OrthNet.py ProjectID -sd -o ./
+	```
+	This step connect all best-hit pairs or tandem duplicated paralogs to create initial clusters.
+
+	With _-d_ option, tandem duplicated paralogs will be included in OrthNets.  Note that the script expects _GenomeID.gtfParsed.TD.txt_ files in the ./ folder when run with _-d_ option. With _-s_ option, it also identifies clusters that need to be further separated into sub-clusters. See `create_CLfm_summary.py -h` for details on options and parameters.
+
+2. Markov clustering (mcl) of hard clusters:
+	```
+	mkdir ./mcl
+	mcl_OrthNet.py ProjectID -o mcl -sc -w weights4mcl.list -I 1.2
+	```
+	Since this process may create a large number of temporary files, I suggest to create a separate working folder (_./mcl_).  The _weights4mcl.list_ includes edge weights users can assign to each type of edges. Users can also select the inflation rate for mcl with _-I_ option. See `mcl_OrthNet.py -h` for details.
+
+	The output filename includes edge weight information.  If default values were used, the output file will be *ProjectID_TD1.5_rC1.2_rNC0.5_uC0.6_uNC0.25_I2.0_mclOut.PC.txt*.
+
+3. Update best-hit pairs and OrthNets after mcl:
+	```
+	update_OrthNet_after_mcl.py ProjectID mcl/ProjectID_TD1.5_rC1.2_rNC1.0_uC0.3_uNC0.25_I1.2_mclOut.PC.txt -b BHPairs.bln.1 -o1 BHPairs.bln.2 -o2 170316_C.2  -u
+	```
+
 
 ---
 ## Searching OrthNets
