@@ -74,6 +74,7 @@ For each genome, coordinates of representative gene models were parsed from geno
 
 ### Input #2: within-species paralog groups
 A tab-delimited text file with *GeneID* and paralog group ID (*PGID*), one gene per line, for each genome.  Input #2 can be prepared by various methods.  Below are two example options:
+
 1. **method #1** If orthoMCL is available, you can run it for each genome and get "in-paralog" groups. Convert the orthoMCL output (_mclOutput_GenomeID.txt_) to input #2:
 	```
 	parse_mclOutput.py -rH mclOutput_GenomeID.txt PG > GenomeID.PG
@@ -190,9 +191,10 @@ The OrthNet module accept a tab-delimited text file with two genes, i.e., best-h
 
 3. Update best-hit pairs and OrthNets after mcl:
 	```
-	update_OrthNet_after_mcl.py ProjectID mcl/ProjectID_TD1.5_rC1.2_rNC1.0_uC0.3_uNC0.25_I1.2_mclOut.PC.txt -b BHPairs.bln.1 -o1 BHPairs.bln.2 -o2 170316_C.2  -u
+	update_OrthNet_after_mcl.py ProjectID mcl/ProjectID_TD1.5_rC1.2_rNC1.0_uC0.3_uNC0.25_I1.2_mclOut.PC.txt -b BHPairs.bln.1 -o1 BHPairs.bln.2 -o2 ProjectID_bln.2 -u
+	format_OrthNetEdges_4SIF.py ./ProjectID_bln.2/ProjectID.clstrd.afterMCL.edges
 	```
-
+	The resulting _ProjectID.clstrd.afterMCL.edges.sif_ file includes all OrthNets identified by the OrthNet module in _.sif_ format for Cytoscape. However, I advise not trying to open the entire OrthNets at once in Cytoscape, since the file is expected to be quite large. See the next section and find how to search and extract subsets of OrthNets using search by GeneID, OrthNetID, or evolutionary context search.
 
 ---
 ## Searching OrthNets
