@@ -194,10 +194,33 @@ The OrthNet module accept a tab-delimited text file with two genes, i.e., best-h
 	update_OrthNet_after_mcl.py ProjectID mcl/ProjectID_TD1.5_rC1.2_rNC1.0_uC0.3_uNC0.25_I1.2_mclOut.PC.txt -b BHPairs.bln.1 -o1 BHPairs.bln.2 -o2 ProjectID_bln.2 -u
 	format_OrthNetEdges_4SIF.py ./ProjectID_bln.2/ProjectID.clstrd.afterMCL.edges
 	```
+	This process again searches for alternative best-hit pairs to maximize pairing within each OrthNet after the _mcl_ clustering. Then, reformat the _.edges_ file to a _.sif_ file to finalize OrthNets:
+
 	The resulting _ProjectID.clstrd.afterMCL.edges.sif_ file includes all OrthNets identified by the OrthNet module in _.sif_ format for Cytoscape. However, I advise not trying to open the entire OrthNets at once in Cytoscape, since the file is expected to be quite large. See the next section and find how to search and extract subsets of OrthNets using search by GeneID, OrthNetID, or evolutionary context search.
 
+4. Run CLfinder one last time to reflect updated best-hit pairs and OrthNet information:
+	```
+	CL_finder_multi.py ProjectID -unr -b BHPairs.bln.2 -o ProjectID_bln.2 -W 20 -N 3 -G 20
+	```
+	Users may want to re-create the CLfinder summary report at this point:
+ 	```
+	create_CLfm_summary.py ProjectID CLfinder_summary.afterOrthNet.txt -p ProjectID_bln.2
+	```
+	
 ---
 ## Searching OrthNets
+OrthNets are stored as .sif (simple interaction file) format, i.e., tab-delimited text with NodeID1, CLtype, NodeID2, and OrthNetID. NodeIDs are formatted as 'GenomeID|GeneID'. Users can use simple linux `grep` commands to retrieve OrthNets using OrthNetIDs. 
+
+For example, to find out OrthNetID of the OrthNet to which a gene of interest belongs:
+```
+grep 'GeneID' ProjectID.clstrd.afterMCL.edges.sif
+```
+To retrieve an OrthNet using OrthNetID, or group of OrthNets with OrthNetIDs listed in _OrthNetID.list_, one per line:
+```
+grep -P "\tOrthNetID$" ProjectID.clstrd.afterMCL.edges.sif > ProjectID.OrthNetID.sif
+while read oid ; do grep -P "\t${oid}$" ProjectID.clstrd.afterMCL.edges.sif > ProjectID.${oid}.sif; done < OrthNetID.list
+```
+Finally, users can search OrthNets for nodes representing a specific evolutionary context (see examples in the Synopsis).  For this, `search_OrthNet.py` uses CLfinder results files (_CL files_) created by the item 4 of the previous section and regular expression patterns created by users as the query.  See `search_OrthNet -h` for details. 
 
 ---
 ## Notes
@@ -216,3 +239,4 @@ The OrthNet module accept a tab-delimited text file with two genes, i.e., best-h
 
 ---
 ## Tutorials
+- coming soon
