@@ -20,6 +20,7 @@ synopsis2 = "detailed description:\n\
      ; requires './<Project>.list' including all spcsIDs, one per each line,\n\
      and 'TDfiles', output files of 'TD_finder.py' for all spcsIDs.\n\
   - '-t'|'--Path2TDfiles': path to 'TDfiles', required for '-d' option.\n\
+  - '-T'|'--TDfile_nameFmt': expects TDfiles named as spcsID + TDfile_nameFmt\n\
  2. Clustering process and parameters\n\
   -  with '-d' option, adds TD edges to './<Project>.4OrthNet.input' and creates\n\
      a file named './<Project>.4OrthNet.TDadded.input'.\n\
@@ -39,6 +40,7 @@ synopsis2 = "detailed description:\n\
  by ohdongha@gmail.com ver0.2 20160822\n"
  
 #version_history
+#20180301 ver 0.2.1 # accept TD_finder.py output file formats as a string ('-T' option); if <Project> argument ends with '.list', just ignore it
 #20160822 ver 0.2 # adding option to create edges for TD genes ('-t' option)
 #20160812 ver 0.1 # modified to work with the updated 'CL_finder_multi.py'
 #20160705 ver 0.0.1 # modifying output order for .nodes
@@ -51,6 +53,7 @@ parser.add_argument('Project', type=str, help="See below")
 parser.add_argument('-d', '--add_TD_edges', action="store_true", default=False, help="add edges connecting TD nodes; see below")
 parser.add_argument('-s', '--single_copies', action="store_true", default=False, help="see below")
 parser.add_argument('-t', '--Path2TDfiles', dest="Path2TDfiles", type=str, default=".", help="PATH to 'TDfiles', required for -d; default='.'")
+parser.add_argument('-T', '--TDfile_nameFmt', dest="TDfile_nameFmt", type=str, default=".", help="default='.gtfParsed.pc.TD.txt'; see below")
 parser.add_argument('-o', '--Path2Output', dest="Path2Output", type=str, default="./Output", help="PATH for output files; default='./Output'") 
 args = parser.parse_args()
 
@@ -65,8 +68,8 @@ try:
 except OSError:
 	if not os.path.isdir(path_output): raise
 
-## defining expected format of input and output file names.  modify as needed: 
-input_TDfiles_filename_format = path_TDfiles + "%s.gtfParsed.pc.TD.txt"
+## defining expected format of input and output file names.  modify as needed:
+input_TDfiles_filename_format = path_TDfiles + "%s" + args.TDfile_nameFmt
 
 
 #######################################################
@@ -76,7 +79,10 @@ input_TDfiles_filename_format = path_TDfiles + "%s.gtfParsed.pc.TD.txt"
 if args.add_TD_edges == True:
 
 	### 2.1. reading the list file 
-	fin_SpcsList = open(args.Project + '.list')
+	try:
+		fin_SpcsList = open(args.Project + '.list', 'r')
+	except IOError:	
+		fin_SpcsList = open(args.Project, 'r')		
 	spcsID_list = []
 	
 	print "\nreading the list file:" + fin_SpcsList.name

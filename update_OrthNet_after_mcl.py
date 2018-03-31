@@ -28,6 +28,7 @@ synopsis2 = "detailed description:\n\
      'update_BestHitPairs.py' or 'updated_OrthNet_after_mcl.py' (itself).\n\
   - '-t'|'--Path2TDfiles' defines the path to 'TDfiles', required for\n\
      re-running 'CL_finder_multi.py' (CLfm) with updated 'BestHitPairs' files.\n\
+  - '-T'|'--TDfile_nameFmt': expects TDfiles named as spcsID + TDfile_nameFmt\n\
  2. Updating 'BestHitPairs' files:\n\
   - if the query and subject nodes in an edge are in different clusters after\n\
      mcl, search next best subjects for one in the same cluster with the query.\n\
@@ -38,15 +39,24 @@ synopsis2 = "detailed description:\n\
   - Output file names for updated BHPs and '.clstrd.edges(.nodes) files include\n\
      '.afterMCL' in front of their extensions.\n\
   - OrthNet information is added as additional columns to the CLfm output files.\n\
+  - print OrthNet nodes in 'mclOutput' format, which can be summarized and\n\
+     annotated by 'parse_mclOutput.py'\n\
+  - '-L'|'--Long': additional columns in '*.afterMCL.txt' output, for debugging\n\
+     purpose; dafault=False.\n\
+  - '-V'|'--Verbose': additional infos printed to .log, for debugging purpose\n\
+     ; dafault=False.\n\
  4. Misc. details:\n\
   - 'BestHitPairs' can be tabulated blast+ results with the '-max_target_seqs N'\n\
      (N>=10) option; i.e. multiple subjects for each query, with the most \n\
      similar ('BestHit') followed by next best subjects.\n\
   - assumes no header in 'BestHitPairs' files.\n\n\
- by ohdongha@gmail.com ver0.3.4 20161026\n"
+ by ohdongha@gmail.com ver0.3.7 20180324\n"
  
 #version_history
-#20161026 ver 0.3.4 # adds "OrthNet_patter" to the CLfm output files
+#20180324 ver 0.3.7 # print OrthNet nodes in ".mclOutput" format, which can be summarized and annotated by 'parse_mclOutput.py'  
+#20180309 ver 0.3.6 # simplify default output and log files, print total # of nodes in the .nodeCounts file
+#20180301 ver 0.3.5 # passing '-T' argument and '-r' option to CL_finder_multi.py
+#20161026 ver 0.3.4 # adds "OrthNet_pattern" to the CLfm output files
 #20161017 ver 0.3.3 # adds the total node number (#nodes) in the OrthNet to the CLfm output files; bug fixed
 #20161003 ver 0.3.2 # adds OrthNet information to the CLfm output files.
 #20160927 ver 0.3.1 # bug fixed 
@@ -62,11 +72,14 @@ parser.add_argument('Project', type=str, help="'./<Project>.list' includes spcsI
 parser.add_argument('mclOutput_parsed', type=argparse.FileType('r'), help="results of mcl, parsed with 'parse_mclOutput.py'")
 # options indicating PATHs
 parser.add_argument('-t', '--Path2TDfiles', dest="Path2TDfiles", type=str, default=".", help="PATH to 'TDfiles'; default='.'")
+parser.add_argument('-T', '--TDfile_nameFmt', dest="TDfile_nameFmt", type=str, default=".", help="default='.gtfParsed.pc.TD.txt'; see below")
 parser.add_argument('-b', '--Path2BHPs', dest="Path2BHPs", type=str, default=".", help="PATH to 'BestHitPairs' files; default='.'")
 parser.add_argument('-o1', '--Path2BHPs_fxd', dest="Path2BHPs_fxd", type=str, default="./Output", help="PATH to updated BestHitPairs files") 
 parser.add_argument('-o2', '--Path2Output', dest="Path2Output", type=str, default="./Output", help="PATH for other temporary and output files") 
 # optional switches
 parser.add_argument('-u', '--updatedBHPs', action="store_true", default=False, help="use updated <BestHitPairs> files; see below")
+parser.add_argument('-L', '--Long', action="store_true", default=False, help="see below")
+parser.add_argument('-V', '--Verbose', action="store_true", default=False, help="see below")
 # options to set parameters to determine co-linearity (see the synopsis):
 parser.add_argument('-W', dest="window_size", type=int, default=20, help="default=20; see 'CL_finder.py'") 
 parser.add_argument('-N', dest="num_CL_trshld", type=int, default=4, help="default=4; see 'CL_finder.py'")
@@ -282,9 +295,9 @@ print "starting 'CL_finder_multi.py' again, using updated 'BestHitPairs'\n"
 ##########################################################################
 ### 4. re-running 'CL_finder_multi.py' with updated BestHitPairs files ###
 ##########################################################################
-command = "CL_finder_multi.py " + args.Project + " -t " + path_TDfiles + " -b " + path_BestHitPairs_fixed  \
-				+ " -o " + path_output + " -un -W " + str(window_size) + " -N " + str(num_CL_trshld) + " -G " \
-				+ str(gap_CL_trshld)
+command = "CL_finder_multi.py " + args.Project + " -t " + path_TDfiles + " -T " + args.TDfile_nameFmt \
+				+ " -b " + path_BestHitPairs_fixed + " -o " + path_output + " -unr -W " + str(window_size) \
+				+ " -N " + str(num_CL_trshld) + " -G " + str(gap_CL_trshld)
 print "now running: %s" % command
 subprocess.call(command, shell=True)
 
@@ -350,7 +363,8 @@ for line in fin_edges:
 		# decision tree: if both the cluster and the edge modified by mcl, and the edge happen to be a TD edge, ...:
 		elif node1ID.split('|')[0] == node2ID.split('|')[0]:
 			fout_TD_edges_report.write( "TD edge affected by mcl: nd1=%s, nd2=%s, clstr(nd1)=%s, clstr(nd2)=%s\n" % (node1ID, node2ID, nodeID_clusterID_affected_by_MCL_dict.get(node1ID,'NA?'), nodeID_clusterID_affected_by_MCL_dict.get(node2ID,'NA?') ) )# report to a separate file, but do not include to .edge files yet?? or include to both? 
-			print( "TD edge affected by mcl: nd1=%s, nd2=%s, clstr(nd1)=%s, clstr(nd2)=%s" % (node1ID, node2ID, nodeID_clusterID_affected_by_MCL_dict.get(node1ID,'NA?'), nodeID_clusterID_affected_by_MCL_dict.get(node2ID,'NA?') ) ) # report to a separate file, but do not include to .edge files yet?? or include to both? 
+			if args.Verbose:
+				print( "TD edge affected by mcl: nd1=%s, nd2=%s, clstr(nd1)=%s, clstr(nd2)=%s" % (node1ID, node2ID, nodeID_clusterID_affected_by_MCL_dict.get(node1ID,'NA?'), nodeID_clusterID_affected_by_MCL_dict.get(node2ID,'NA?') ) ) # report to a separate file, but do not include to .edge files yet?? or include to both? 
 		# decision tree: if both the cluster and the edge modified by mcl, see whether the edge can be rescued by the updated BHpairs:	
 		else:
 			edgeID_12_fxd = "-___-"
@@ -358,12 +372,12 @@ for line in fin_edges:
 			if node1ID + '___' + node2ID.split('|')[0] in queryID_subject_spcsID_fxd_dict:
 				edgeID_12_fxd = node1ID + '___' + node2ID.split('|')[0] + '|' + \
 							queryID_subject_spcsID_fxd_dict[ node1ID + '___' + node2ID.split('|')[0] ]
-				if edgeID_12_fxd != (node1ID + '___' + node2ID):
+				if edgeID_12_fxd != (node1ID + '___' + node2ID) and args.Verbose:
 					print "### edgeID_12 %s___%s is modified to edgeID_12_fxd %s" % (node1ID, node2ID, edgeID_12_fxd)
 			if node2ID + '___' + node1ID.split('|')[0] in queryID_subject_spcsID_fxd_dict:
 				edgeID_21_fxd = node2ID + '___' + node1ID.split('|')[0] + '|' + \
 							queryID_subject_spcsID_fxd_dict[ node2ID + '___' + node1ID.split('|')[0] ]
-				if edgeID_21_fxd != (node2ID + '___' + node1ID):
+				if edgeID_21_fxd != (node2ID + '___' + node1ID) and args.Verbose:
 					print "### edgeID_21 %s___%s is modified to edgeID_21_fxd %s" % (node2ID, node1ID, edgeID_21_fxd)
 			# process the fwd edge
 			if edgeID_12_fxd != "-___-":
@@ -373,8 +387,9 @@ for line in fin_edges:
 					CLtype_12 = edgeID_CLtype_fxd_dict[ edgeID_12_fxd ]
 					CLtype_21 = '-'
 					fout_edges_fxd.write( nodeID_clusterID_affected_by_MCL_dict[node1ID] + '\t' + node1ID + '\t' + node2ID + '\t' + CLtype_12 + '\t' + CLtype_21 + '\n' )
-					print( nodeID_clusterID_affected_by_MCL_dict[node1ID] + '\t' + node1ID + '\t' + node2ID + '\t' + CLtype_12 + '\t' + CLtype_21 + ' ##case3fwd' )
-				else:
+					if args.Verbose:
+						print( nodeID_clusterID_affected_by_MCL_dict[node1ID] + '\t' + node1ID + '\t' + node2ID + '\t' + CLtype_12 + '\t' + CLtype_21 + ' ##case3fwd' )
+				elif args.Verbose:
 					print "dropping edgeID_12_fxd fwd %s, nd1 and nd2 belong to different clusters, %s and %s" % (edgeID_12_fxd, nodeID_clusterID_affected_by_MCL_dict.get(node1ID, "NA1"), nodeID_clusterID_affected_by_MCL_dict.get(node2ID, "NA2"))
 			# process the rev edge
 			if edgeID_21_fxd != "-___-":
@@ -384,11 +399,12 @@ for line in fin_edges:
 					CLtype_12 = '-'
 					CLtype_21 = edgeID_CLtype_fxd_dict[ edgeID_21_fxd ]
 					fout_edges_fxd.write( nodeID_clusterID_affected_by_MCL_dict[node1ID] + '\t' + node1ID + '\t' + node2ID + '\t' + CLtype_12 + '\t' + CLtype_21 + '\n' )
-					print( nodeID_clusterID_affected_by_MCL_dict[node1ID] + '\t' + node1ID + '\t' + node2ID + '\t' + CLtype_12 + '\t' + CLtype_21 + ' ##case3rev' )
-				else:
+					if args.Verbose:			
+						print( nodeID_clusterID_affected_by_MCL_dict[node1ID] + '\t' + node1ID + '\t' + node2ID + '\t' + CLtype_12 + '\t' + CLtype_21 + ' ##case3rev' )	
+				elif args.Verbose:
 					print "dropping edgeID_12_fxd rev %s, nd1 and nd2 belong to different clusters, %s and %s" % (edgeID_12_fxd, nodeID_clusterID_affected_by_MCL_dict.get(node1ID, "NA1"), nodeID_clusterID_affected_by_MCL_dict.get(node2ID, "NA2"))
 
-print "finished writing %s, now consolidating redundant edges," % fout_edges_fxd.name						
+print "\nfinished writing %s, now consolidating redundant edges," % fout_edges_fxd.name						
 fin_edges.close()
 fout_edges_fxd.close()
 
@@ -415,23 +431,27 @@ for line in fin_edges_fxd:
 	if edgeID not in edgeID_clusterID_dict:
 		edgeID_clusterID_dict[edgeID] = clusterID
 	elif edgeID_clusterID_dict[edgeID] != clusterID:
-		print "warning: edgeID %s appears in more than one cluster: %s and %s" % (edgeID, edgeID_clusterID_dict[edgeID], clusterID)
+		if args.Verbose:
+			print "warning: edgeID %s appears in more than one cluster: %s and %s" % (edgeID, edgeID_clusterID_dict[edgeID], clusterID)
 		num_problematic_edges += 1
 		
 	if CLtype_12 != '-':
 		if edgeID not in edgeID_CLtype12_dict:
 			edgeID_CLtype12_dict[edgeID] = CLtype_12
 		elif re.sub('_BH.*1$', '', edgeID_CLtype12_dict[edgeID].strip()) != re.sub('_BH.*1$', '', CLtype_12):
-			print "warning: edgeID %s contains conflicting CLtype[1->2]: %s and %s" % (edgeID, edgeID_CLtype12_dict[edgeID], CLtype_12)
+			if args.Verbose:
+				print "warning: edgeID %s contains conflicting CLtype[1->2]: %s and %s" % (edgeID, edgeID_CLtype12_dict[edgeID], CLtype_12)
 			num_problematic_edges += 1
 		
 	if CLtype_21 != '-':
 		if edgeID not in edgeID_CLtype21_dict:
 			edgeID_CLtype21_dict[edgeID] = CLtype_21
 		elif re.sub('_BH.*1$', '', edgeID_CLtype21_dict[edgeID].strip()) != re.sub('_BH.*1$', '', CLtype_21):
-			print "warning: edgeID %s contains conflicting CLtype[2->1]: %s and %s" % (edgeID, edgeID_CLtype21_dict[edgeID], CLtype_21)
+			if args.Verbose:
+				print "warning: edgeID %s contains conflicting CLtype[2->1]: %s and %s" % (edgeID, edgeID_CLtype21_dict[edgeID], CLtype_21)
 			num_problematic_edges += 1
-			
+
+print "found %d problematic edges (warnings)... run with -V option to see what they are" % num_problematic_edges 
 fin_edges_fxd.close()
 fout_edges_fxd_consolidated = open(path_output + args.Project + ".clstrd.afterMCL.edges", "w")
 
@@ -450,19 +470,19 @@ command = "awk 'NR == 1; NR > 1 {print $0 | \"sort -k1,1 -k2,2 -k3,3\"}' " + pat
 subprocess.call(command, shell=True)
 
 
-
 ###########################################################################################
 ### 6. update <Project>.clstrd.nodes, based on the <Project>.clstrd.afterMCL.edges file ###
 ###########################################################################################
-## 6.1. create './<Project>.clstrd.afterMCL.nodes' and './<Project>.clstrd.afterMCL.node.counts' 
-print "finished creating updated '.edges' files; now writing '.nodes' and 'nodes.counts' files"
+## 6.1. create './<Project>.clstrd.afterMCL.nodes', './<Project>.clstrd.afterMCL.nodeCounts', and './<Project>.clstrd.afterMCL.nodes.mclOutput' 
+print "\nfinished updating .edges files; now writing .nodes, .nodeCounts, and .nodes.mclOutput files\n"
 fin_edges_fxd_consolidated = open(path_output + args.Project + ".clstrd.afterMCL.edges", "rU")
 fout_nodes_fxd = open(path_output + args.Project + ".clstrd.afterMCL.nodes", "w") 
-fout_nodes_counts_fxd = open(path_output + args.Project + ".clstrd.afterMCL.nodes.counts", "w")
+fout_nodeCounts_fxd = open(path_output + args.Project + ".clstrd.afterMCL.nodeCounts", "w")
+fout_nodes_fxd_mclOutput = open(path_output + args.Project + ".clstrd.afterMCL.nodes.mclOutput", "w") 
 
 nodeID_clusterID_afterMCL_dict = dict() # key = 'nodeID', value = clusterID as in '<Project>.clstrd.afterMCL.edges'
-nodeID_count_as_query_dict = dict() # key = 'nodeID' (i.e. 'spcsID|geneID'), value = counts as query
-nodeID_count_as_subject_dict = dict() # key = 'nodeID' (i.e. 'spcsID|geneID'), value = counts as query
+num_nodeID_as_query_dict = dict() # key = 'nodeID' (i.e. 'spcsID|geneID'), value = counts as query
+num_nodeID_as_subject_dict = dict() # key = 'nodeID' (i.e. 'spcsID|geneID'), value = counts as query
 
 clusterID = ""
 node1ID = ""
@@ -473,9 +493,9 @@ header = True
 
 # wrting headers
 fout_nodes_fxd.write("nodeID\tclusterID\tcount_as_query\tcount_as_subject\tcount_as_both\n")
-fout_nodes_counts_fxd.write("clusterID\tNodeCounts_" + '.'.join(spcsID_list) + '\n' )
+fout_nodeCounts_fxd.write("clusterID\t#Nodes\tNodeCounts_" + '.'.join(spcsID_list) + '\n' )
 
-## 6.2. counting node occurance from the final '.edges' file 
+## 6.2. counting node occurrence from the final '.edges' file 
 for line in fin_edges_fxd_consolidated:
 	tok = line.split('\t')
 
@@ -490,56 +510,74 @@ for line in fin_edges_fxd_consolidated:
 
 		if node1ID not in nodeID_clusterID_afterMCL_dict:
 			nodeID_clusterID_afterMCL_dict[node1ID] = clusterID
-		elif clusterID != nodeID_clusterID_afterMCL_dict[node1ID]:
+		elif clusterID != nodeID_clusterID_afterMCL_dict[node1ID] and args.Verbose:
 			print "warning: nd1 %s appears in different clusters, %s and %s" % (node1ID, nodeID_clusterID_afterMCL_dict[node1ID], clusterID)
 		if node2ID not in nodeID_clusterID_afterMCL_dict:
 			nodeID_clusterID_afterMCL_dict[node2ID] = clusterID
-		elif clusterID != nodeID_clusterID_afterMCL_dict[node2ID]:
+		elif clusterID != nodeID_clusterID_afterMCL_dict[node2ID] and args.Verbose:
 			print "warning: nd2 %s appears in different clusters, %s and %s" % (node2ID, nodeID_clusterID_afterMCL_dict[node2ID], clusterID)
 		
 		if CLtype_12 != 'TD' and CLtype_12 != '-':
-			nodeID_count_as_query_dict[node1ID] = nodeID_count_as_query_dict.get(node1ID, 0) + 1
-			nodeID_count_as_subject_dict[node2ID] = nodeID_count_as_subject_dict.get(node2ID, 0) + 1
+			num_nodeID_as_query_dict[node1ID] = num_nodeID_as_query_dict.get(node1ID, 0) + 1
+			num_nodeID_as_subject_dict[node2ID] = num_nodeID_as_subject_dict.get(node2ID, 0) + 1
 		if CLtype_21 != 'TD' and CLtype_21 != '-':
-			nodeID_count_as_query_dict[node2ID] = nodeID_count_as_query_dict.get(node2ID, 0) + 1
-			nodeID_count_as_subject_dict[node1ID] = nodeID_count_as_subject_dict.get(node1ID, 0) + 1
+			num_nodeID_as_query_dict[node2ID] = num_nodeID_as_query_dict.get(node2ID, 0) + 1
+			num_nodeID_as_subject_dict[node1ID] = num_nodeID_as_subject_dict.get(node1ID, 0) + 1
 			
 for key in nodeID_clusterID_afterMCL_dict:
-	if key not in nodeID_count_as_query_dict: nodeID_count_as_query_dict[key] = 0
-	if key not in nodeID_count_as_subject_dict: nodeID_count_as_subject_dict[key] = 0
+	if key not in num_nodeID_as_query_dict: num_nodeID_as_query_dict[key] = 0
+	if key not in num_nodeID_as_subject_dict: num_nodeID_as_subject_dict[key] = 0
 
 ## 6.2. print the '.afterMCl.nodes' file, and count spcsIDs in nodeIDs for each clusterID
 spcsID = ""
 nodeID = ""
 
-spcsID_count_in_each_clusterID_dict = dict() # key = clusterID, value = dict of node counts for each spcsID 
+num_spcsID_in_clusterID_dict = dict() # key = clusterID, value = dict of node counts for each spcsID 
 for nodeID in nodeID_clusterID_afterMCL_dict:
 	clusterID = nodeID_clusterID_afterMCL_dict[nodeID]
 	# print '.afterMCL.nodes' file
-	fout_nodes_fxd.write(nodeID + '\t' + clusterID + '\t' + str(nodeID_count_as_query_dict[nodeID]) + '\t' + str(nodeID_count_as_subject_dict[nodeID]) \
-							+ '\t' + str(nodeID_count_as_query_dict[nodeID] + nodeID_count_as_subject_dict[nodeID]) + '\n' )
-	# count spcsIDs for '.afterMCL.nodes.counts' file 
-	if clusterID not in spcsID_count_in_each_clusterID_dict:
-		spcsID_count_in_each_clusterID_dict[clusterID] = dict() # key = spcsID, value = count
+	fout_nodes_fxd.write(nodeID + '\t' + clusterID + '\t' + str(num_nodeID_as_query_dict[nodeID]) + '\t' + str(num_nodeID_as_subject_dict[nodeID]) \
+							+ '\t' + str(num_nodeID_as_query_dict[nodeID] + num_nodeID_as_subject_dict[nodeID]) + '\n' )
+	# count spcsIDs for '.afterMCL.nodeCounts' file 
+	if clusterID not in num_spcsID_in_clusterID_dict:
+		num_spcsID_in_clusterID_dict[clusterID] = dict() # key = spcsID, value = count
 	spcsID = nodeID.split('|')[0].strip()
-	spcsID_count_in_each_clusterID_dict[clusterID][spcsID] = spcsID_count_in_each_clusterID_dict[clusterID].get(spcsID, 0) + 1
+	num_spcsID_in_clusterID_dict[clusterID][spcsID] = num_spcsID_in_clusterID_dict[clusterID].get(spcsID, 0) + 1
 
-## 6.3. print the '.afterMCl.nodes.count' file
-spcsID_count_in_each_clusterID_list = []
-for clusterID in sorted(spcsID_count_in_each_clusterID_dict):
-	spcsID_count_in_each_clusterID_list = []
+## 6.3. print the '.afterMCl.nodeCounts' file
+num_spcsID_in_clusterID_list = []
+num_total_nodes = 0
+for clusterID in sorted(num_spcsID_in_clusterID_dict):
+	num_spcsID_in_clusterID_list = []
+	num_total_nodes = 0
 	for spcsID in spcsID_list:
-		spcsID_count_in_each_clusterID_list.append(str(spcsID_count_in_each_clusterID_dict[clusterID].get(spcsID, 0)))
-	fout_nodes_counts_fxd.write(clusterID +'\t' + '.'.join(spcsID_count_in_each_clusterID_list) + '\n' )
+		num_spcsID_in_clusterID_list.append(str(num_spcsID_in_clusterID_dict[clusterID].get(spcsID, 0)))
+		num_total_nodes += num_spcsID_in_clusterID_dict[clusterID].get(spcsID, 0)
+	fout_nodeCounts_fxd.write(clusterID +'\t%d\t%s\n' % ( num_total_nodes, '.'.join(num_spcsID_in_clusterID_list) ) )
 
 fin_edges_fxd_consolidated.close()
 fout_nodes_fxd.close()
-fout_nodes_counts_fxd.close()
+fout_nodeCounts_fxd.close()
 
 ## 6.4 sorting '.afterMCL.nodes' file, to create the final version
 command = "awk 'NR == 1; NR > 1 {print $0 | \"sort -k2,2 -k5,5nr\"}' " + path_output + args.Project + ".clstrd.afterMCL.nodes > __nodes_temp__; mv __nodes_temp__ " \
 		+ path_output + args.Project + ".clstrd.afterMCL.nodes"
 subprocess.call(command, shell=True)
+
+## 6.5. print the '.afterMCL.nodes.mclOutput' file
+clusterID_nodeID_afterMCL_dict = dict() # key = clusterID, value = list of nodeIDs
+
+for ndID in nodeID_clusterID_afterMCL_dict:
+	clID = nodeID_clusterID_afterMCL_dict[ndID]
+	if clID not in clusterID_nodeID_afterMCL_dict:
+		clusterID_nodeID_afterMCL_dict[clID] = [ndID]
+	else:
+		clusterID_nodeID_afterMCL_dict[clID].append(ndID)
+		
+for clID in sorted(clusterID_nodeID_afterMCL_dict):
+	fout_nodes_fxd_mclOutput.write( clID + ": " + ' '.join(sorted(clusterID_nodeID_afterMCL_dict[clID])) + '\n')
+	
+fout_nodes_fxd_mclOutput.close()
 
 
 #######################################################
@@ -558,7 +596,7 @@ nodeID = ""
 clusterID = ""
 CLmatrix_clean = ""
 line_afterMCL = ""
-spcsID_count_in_each_clusterID_list = []
+num_spcsID_in_clusterID_list = []
 num_nodes = 0
 header = True
 
@@ -572,29 +610,49 @@ for item in CLfm_output_filename_list:
 	spcs_viewpoint = item.split('/')[-1].split('.CL_compared2')[0]	
 	
 	for line in fin_CLfm_output:
+		if args.Long == False:
+			line_afterMCL = '\t'.join(line.split('\t')[0:-1]) # remove the CLmatrix* column to make the output simple	
 		if header == True:
-			fout_CLfm_output_afterMCL.write(line.strip() + '\tOrthNetID\t#asQuery\t#asSubject\tnodes.counts\t#nodes\tOrthNet_pattern\n')
+			if args.Long:
+				fout_CLfm_output_afterMCL.write(line.strip() + '\tOrthNetID\t#asQuery\t#asSubject\tnodeCounts\t#nodes\tOrthNet_pattern\n')
+			else:
+				fout_CLfm_output_afterMCL.write(line_afterMCL + '\tOrthNetID\t#nodes\tOrthNet_pattern\n')			
 			header = False
 		else:
 			# get the CLmatrix cleaned of '_BHmX', '_BHX', '_end', etc.
-			CLmatrix_clean = re.sub("(_BHm[1-9][0-9])|(_BHm[1-9x])|(_BH[1-9][0-9])|(_BH[1-9x])|(_end)", "", line.split('\t')[-1].strip())
+			CLmatrix_clean = re.sub("(_BHm[1-9][0-9])|(_BHm[1-9x])|(_BH[1-9][0-9])|(_BH[1-9x])|(_end)|(_bestHitNotPC)", "", line.split('\t')[-1].strip())
 			nodeID = spcs_viewpoint + '|' + line.split('\t')[0].strip()
 			clusterID = nodeID_clusterID_afterMCL_dict.get(nodeID, "")
-			line_afterMCL = line.strip() + '\t' + clusterID + '\t' + str(nodeID_count_as_query_dict.get(nodeID, "")) \
-							 + '\t' + str(nodeID_count_as_subject_dict.get(nodeID, ""))
+			if args.Long:
+				line_afterMCL = line.strip() + '\t' + clusterID + '\t' + str(num_nodeID_as_query_dict.get(nodeID, "")) \
+							 + '\t' + str(num_nodeID_as_subject_dict.get(nodeID, ""))
+			else:
+				line_afterMCL = line_afterMCL + '\t' + clusterID			
 			if clusterID != "":
-				spcsID_count_in_each_clusterID_list = []
+				num_spcsID_in_clusterID_list = []
 				num_nodes = 0
 				for spcsID in spcsID_list:
-					spcsID_count_in_each_clusterID_list.append(str(spcsID_count_in_each_clusterID_dict[clusterID].get(spcsID, 0)))
-					num_nodes = num_nodes + spcsID_count_in_each_clusterID_dict[clusterID].get(spcsID, 0)
-				line_afterMCL = line_afterMCL + '\t' + '.'.join(spcsID_count_in_each_clusterID_list)
-				line_afterMCL = line_afterMCL + '\t' + str(num_nodes)
-				line_afterMCL = line_afterMCL + '\t' + CLmatrix_clean + '__' + '.'.join(spcsID_count_in_each_clusterID_list) + '\n'
-			else:
+					num_spcsID_in_clusterID_list.append(str(num_spcsID_in_clusterID_dict[clusterID].get(spcsID, 0)))
+					num_nodes = num_nodes + num_spcsID_in_clusterID_dict[clusterID].get(spcsID, 0)
+				if args.Long:
+					line_afterMCL = line_afterMCL + '\t' + '.'.join(num_spcsID_in_clusterID_list)
+					line_afterMCL = line_afterMCL + '\t' + str(num_nodes)
+					line_afterMCL = line_afterMCL + '\t' + CLmatrix_clean + '__' + '.'.join(num_spcsID_in_clusterID_list) + '\n'
+				else:
+					line_afterMCL = line_afterMCL + '\t' + str(num_nodes)
+					line_afterMCL = line_afterMCL + '\t' + CLmatrix_clean + '__' + '.'.join(num_spcsID_in_clusterID_list) + '\n'				
+			elif args.Long:
 				line_afterMCL = line_afterMCL + '\t\t\t' + CLmatrix_clean + '\n'
+			else:
+				line_afterMCL = line_afterMCL + '\t\t' + CLmatrix_clean + '\n'
 			fout_CLfm_output_afterMCL.write(line_afterMCL)
 	fin_CLfm_output.close()
 	fout_CLfm_output_afterMCL.close()
 
-print "done"
+print "\ndone"
+
+## clean the .temp file
+try:
+    os.remove(path_output + args.Project + ".clstrd.afterMCL.edges.temp")
+except OSError:
+    pass

@@ -1,18 +1,20 @@
 #!/usr/bin/env python
+import sys
 
-synopsis = "\njoin_files_by_NthCol.py <file1.txt> <N> <header_switch> <file2.txt> <output.txt>\n\
-# <file1.txt> and <file2.txt> are tab-delimited.\n\
-# add <file2.txt> to <file1.txt>, by matching values in the 1st column of <file2.txt> ...\n\
-# ... with <N>th column of the <file1.txt>.\n\
-# if <header_switch> = 1, assumes there are headers in both files. <header_switch> = 0, when files have no header.\n\
-# all lines in <file1.txt> will be kept, with fields with no matches filled with 'na'.\n\
-# if multiple lines with the same value in the 1st column exist in <File2.txt>, only the first occurance will be used.\n\
-# the 1st column of <File2.txt> will be omitted. \n\
+synopsis = "\n\
+join_files_by_NthCol.py <file1> <N> <header_switch> <file2> <output.txt> [e]\n\
+ - <file1> and <file2> are tab-delimited text files,\n\
+ - add <file2> to <file1>, by matching values in the 1st column of <file2>,\n\
+     with the <N>st/nd/th column of the <file1>,\n\
+ - <header_switch> == 1, if both files have headers; 0, if both have no header,\n\
+ - all lines in <file1> are kept, with fields with no matches filled with 'na',\n\
+ - if [e] is specified, fields with no matches are [e]mpty, instead of 'na',\n\
+ - uses only the first occurrence of the same value in the 1st column in <file2>\n\n\
+# copyleft by ohdongha@gmail.com 20180317 ver 1.1.1\n\n"
+
+# 20180317 ver 1.1.1 options to add empty cells, instead of 'na,' for non-matches,\n\
 # 20170715 ver 1.1 reporting more details when a line has an error,\n\
 # 20150904 ver 1.0\n\
-# copyleft by ohdongha@gmail.com\n\n"
-
-import sys
 
 try: 
 	fin_file1 = open(sys.argv[1], "rU")
@@ -27,6 +29,11 @@ except IndexError :
 	print synopsis
 	sys.exit(0)
 
+empty_nonMatch = False
+if len(sys.argv) >= 6:
+	if sys.argv[6] == 'e':
+		empty_nonMatch = True
+	
 line_in_file2_dict = {}
 header_file2 = ""
 header_or_not = 1
@@ -66,7 +73,10 @@ for line in fin_file1:
 			file1_ID = new_line.split('\t')[col_to_match].strip()
 			if file1_ID not in line_in_file2_dict:
 				for i in range(1, number_of_fields_in_file2):
-					new_line = new_line + '\t' + 'na'
+					if empty_nonMatch:
+						new_line = new_line + '\t'					
+					else:
+						new_line = new_line + '\t' + 'na'
 			else:
 				new_line = new_line + line_in_file2_dict[file1_ID]
 		fout.write(new_line + '\n')
@@ -78,4 +88,3 @@ for line in fin_file1:
 print "\n### done\n "
 fin_file1.close()
 fout.close()
-
