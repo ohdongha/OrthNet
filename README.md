@@ -14,8 +14,8 @@ Jump to:
  [**Preparing input files**](https://github.com/ohdongha/CL_finder#preparing-input-files);
  [**Running CLfinder**](https://github.com/ohdongha/CL_finder#running-clfinder);
  [**Running OrthNet**](https://github.com/ohdongha/CL_finder#running-orthnet);
- [**Annotating OrthNets**](https://github.com/ohdongha/CL_finder#annotating-orthnet);
  [**Searching OrthNets**](https://github.com/ohdongha/CL_finder#searching-orthnets);
+ [**Annotating OrthNets**](https://github.com/ohdongha/CL_finder#annotating-orthnets-optional);
  [**Notes**](https://github.com/ohdongha/CL_finder#notes);
  [**Tutorial**](https://github.com/ohdongha/CL_finder#tutorial)
 
