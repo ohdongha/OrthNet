@@ -31,8 +31,8 @@ Jump to:
 - I assume users are familiar with basic linux commands.
 - Optional
 	* gffread (https://github.com/gpertea/gffread) - if you start with a .gff file to generate input #1
-	* orthoMCL (http://orthomcl.org/common/downloads/software/) - an alternative to generate input #2, originally the default method
-	* blast+ (https://www.ncbi.nlm.nih.gov/books/NBK1762/) - an alternative to generate input #3 and annotation, originally the default method
+	* orthoMCL (http://orthomcl.org/common/downloads/software/) - an alternative to generate input #2
+	* blast+ (https://www.ncbi.nlm.nih.gov/books/NBK1762/) - an alternative to generate input #3 and annotation
 	* Cytoscape (http://cytoscape.org/) - to visualize and print OrthNets
 
 ### Prerequisites -genome data
