@@ -78,7 +78,15 @@ For each genome, coordinates of representative gene models are parsed from genom
 
 
 ### Input #2: within-species paralog groups (PGs)
-A tab-delimited text file with *GeneID* and paralog group ID (*PGID*), one gene per line, for each genome.  Input #2 can be prepared by various methods.  Below are two example options:
+A tab-delimited text file with *GeneID* and paralog group ID (*PG*), one gene per line for each genome:
+```
+GeneID	PG
+Gene1	PGxxxx
+Gene2	PGxxxy
+Gene3	PGxxxz
+...
+```
+Input #2 can be prepared by various methods.  Below are two example options:
 
 **method #1** Cluster all representative protein sequences using MMseqs2 for each genome and get "in-paralog" groups. Convert the .tsv output to input #2. Assuming all representative peptide sequences for each genome is _GenomeID.pep.rep.fa_:
 ```
@@ -113,7 +121,7 @@ while read g; do parse_mclOutput.py mclOutput_${g}.txt PG -rH > ${g}.PG; done < 
 Proceed to the next step with *GenomeID.PG* (input #2).
 
 
-### Input #3: between-species best-hit pairs
+### Input #3: between-species best-hit pairs (BHPairs)
 A tab-delimited text file with the GeneID of the query gene and its 'best-hit' or best-hit candidate GeneID in the target genome, one pair per line, for all possible pairs of genomes in *ProjectID.list*.  Below, I describe two methods using BLASTN (default) and MMseqs2 (alternative): 
 
 **method #1** For all *GenomeIDs* in *ProjectID.list*, create a blast database for the representative CDS sequences in *GenomeID.cds.rep.fa*:
@@ -129,11 +137,11 @@ Create blast commands for all possible pair of genomes in *ProjectID.list*.  For
 ```
 create_pairwiseBLAST_commands.py ProjectID.list -n "-task blastn -evalue 1e-5 -max_target_seqs 10 -outfmt '6 std qlen slen'" > ProjectID_pairwiseBLASTN.sh
 ```
-Check `create_pairwiseBLAST_commands.py -h` for detailed options to designate folders for CDS sequences or blastn output files, as well as options to use blastp on deduced peptide sequences instead.
+Check `create_pairwiseBLAST_commands.py -h` for detailed options to designate folders for CDS sequences or blastn output files, as well as options to use blastp or MMseqs2 on deduced peptide sequences instead.
 
 Once blast commands (_ProjectID_pairwiseBLASTN.sh_) were created, users will want to run it in the background (e.g. using the linux _screen_ command) and multiplex if possible, depending on the computational resource.  Users can add *-num_threads* option to the string given with *-n* option in the example above. 
 	
-**method #2** Users can use peptide sequences to generate input #3 using MMseqs2.  First create and index DB for all genomes listed in _ProjectID.list_ (if MMseqs2 was already used to generate the input #2, this step must have been already done):
+**method #2** Users can use peptide sequences deduced from representative gene models (_GenomeID.pep.rep.fa_) to generate input #3 using MMseqs2.  First create and index DB for all genomes listed in _ProjectID.list_ (if MMseqs2 was used for the input #2, this step must have been already done):
 
 ```
 mkdir tmp_mms # temporary folder for MMseqs2 runs
@@ -148,7 +156,7 @@ And create MMseqs2 commands for all pairwise genomes using `create_pairwiseBLAST
 ```
 create_pairwiseBLAST_commands.py ProjectID -M -n "--max-seqs 10" > ProjectID_pairwiseMMseqs2.bash
 ```
-Run the MMseqs2 command (_ProjectID_pairwiseMMseqs2.sh_).  This step is usually very fast (<1 min per genome).
+Run the MMseqs2 command (_ProjectID_pairwiseMMseqs2.sh_) as a background process (e.g. using the linux _screen_ command), etc.
 
 **After running all pairwise comparison** you will have output files named as *out\__GenomeID1\__vs\__GenomeID2.txt*, for all pairs with GenomeID1 != GenomeID2.  Convert these blastn (or MMseqs2) results to input #3:
 ```
@@ -157,7 +165,7 @@ f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.txt}.list
 done
 mkdir ./BHPairs; mv BestHits__*.list ./BHPairs
 ```
-This will generate input #3 for *GenomeID1* and *GenomeID2* as *BestHits\__GenomeID1\_vs\_GenomeID2.list* for all genome pairs in the folder _./BHPairs_.  As long as the file names and formats are correct, input #3 can be created by other methods to detect similar sequences, such as blastp.
+This will generate input #3 for all genome pairs as *BestHits\__GenomeID1\_vs\_GenomeID2.list* in the folder _./BHPairs_.  As long as the file names and formats are correct, input #3 can be created by other methods to detect similar sequences, such as blastp.
 
 * Users can add filters to BHPairs at this step, to remove BHPairs with too low HSP_cov, HSP_len, and/or HSP_idn (see `consolidate_blast_HSPs -h`). See [Note 2](https://github.com/ohdongha/CL_finder#2-filtering-best-hit-pairs-based-on-hsp_cov)
 
