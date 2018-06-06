@@ -119,7 +119,9 @@ A tab-delimited text file with *GeneID* and paralog group ID (*PGID*), one gene 
 	```
 	To process all genomes listed in *ProjectID.list*:
 	```
-	while read g; do join_files_by_NthCol.py ${g}.gtfParsed.rep.txt 1 1 ${g}.PG ${g}.gtfParsed.PG.txt; done < ProjectID.list
+	while read g; do 
+	join_files_by_NthCol.py ${g}.gtfParsed.rep.txt 1 1 ${g}.PG ${g}.gtfParsed.PG.txt
+	done < ProjectID.list
 	```
 
 ### Input #3: between-species best-hit pairs
@@ -148,7 +150,9 @@ A tab-delimited text file with the GeneID of the query gene and its 'best-hit' o
 	If the user choose to add filters for HSP_cov and/or add HSP_cov and HSP_idn (see `consolidate_blast_HSPs -h`) in the co-linearity information, see [Note 2](https://github.com/ohdongha/CL_finder#2-filtering-best-hit-pairs-based-on-hsp_cov), instead of proceeding to the item 3 below.
 3. Convert the blastn output to input #3:
 	```
-	for f in out__*.bln.txt; do f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.bln.txt}.list; done
+	for f in out__*.bln.txt; do 
+	f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.bln.txt}.list
+	done
 	mkdir ./BHPairs.bln; mv BestHits__*.list ./BHPairs.bln
 	```
 	This will generate input #3 for *GenomeID1* and *GenomeID2* as *BestHits\__GenomeID1\_vs\_GenomeID2.list* for all genome pairs in the folder _./BHPairs.bln_ (the scripts work for any folder name; .bln stands for blastn).  As long as the file names and formats are correct, input #3 can be created by other methods to detect similar sequences, such as blastp.
@@ -172,7 +176,9 @@ create_pairwiseBLAST_commands.py ProjectID -M -n "--max-seqs 10" > ProjectID_pai
 After running the MMseqs2 command (_ProjectID_pairwiseMMseqs2.sh_), the results can be converted to input #3 in the same way as above:
 
 ```
-for f in out__*.mmseqs2.txt; do f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.mmseqs2.txt}.list; done
+for f in out__*.mmseqs2.txt; do 
+f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.mmseqs2.txt}.list
+done
 mkdir ./BHPairs.mms; mv BestHits__*.list ./BHPairs.mms
 ```
 (Note that when MMseqs2 was used for input #2, _BHPairs.bln_ in the all following steps below should be replaced with _BHPairs.mms_)
@@ -188,7 +194,9 @@ Now CLfinder module is ready to run:
 
 1. Add *LocusID* and tandem duplication information to *GenomeID_gtfParsed.PG.txt*:
 	```
-	while read g; do TD_finder.py ${g}.gtfParsed.PG.txt $g 4 ${g}.gtfParsed.TD.txt; done < ProjectID.list > ProjectID_TD.log 2>&1
+	while read g; do 
+	TD_finder.py ${g}.gtfParsed.PG.txt $g 4 ${g}.gtfParsed.TD.txt
+	done < ProjectID.list > ProjectID_TD.log 2>&1
 	```
 	This will identify all paralogs in the same paralog group and within 4 loci (min_TD_loci) as tandem duplicated (_td_), and report the number of _td_ events and genes in those events as _ProjectID_TD.log_. Users can modify the *min_TD_loci* parameter as needed. _GenomeID.gtfParsed.TD.txt_ files now include columns for _td_ events as well as numerical _LocusIDs_ for each genome.
 
@@ -261,7 +269,9 @@ grep 'GeneID' ProjectID.clstrd.afterMCL.edges.sif
 To retrieve an OrthNet using OrthNetID, or group of OrthNets with OrthNetIDs listed in _OrthNetID.list_, one per line:
 ```
 grep -P "\tOrthNetID$" ProjectID.clstrd.afterMCL.edges.sif > ProjectID.OrthNetID.sif
-while read oid ; do grep -P "\t${oid}$" ProjectID.clstrd.afterMCL.edges.sif > ProjectID.${oid}.sif; done < OrthNetID.list
+while read oid ; do 
+grep -P "\t${oid}$" ProjectID.clstrd.afterMCL.edges.sif > ProjectID.${oid}.sif
+done < OrthNetID.list
 ```
 Finally, users can search OrthNets for nodes representing a specific evolutionary context (see examples in the Synopsis).  For this, `search_OrthNet.py` uses CLfinder results files (_CL files_) created by the item 4 of the previous section and regular expression patterns created by users as the query.  See `search_OrthNet -h` for details. 
 	
