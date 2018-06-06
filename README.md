@@ -80,84 +80,60 @@ For each genome, coordinates of representative gene models are parsed from genom
 ### Input #2: within-species paralog groups (PGs)
 A tab-delimited text file with *GeneID* and paralog group ID (*PGID*), one gene per line, for each genome.  Input #2 can be prepared by various methods.  Below are two example options:
 
-1. **method #1** Cluster all representative protein sequences using MMseqs2 for each genome and get "in-paralog" groups. Convert the .tsv output to input #2. Assuming all representative peptide sequences for each genome is _GenomeID.pep.rep.fa_:
-	```
-	mkdir tmp_mms # temporary folder for MMseqs2 runs
-	mmseqs createdb GenomeID.pep.rep GenomeID_DB
-	mmseqs createindex GenomeID_DB tmp_mms
-	mmseqs cluster GenomeID_DB GenomeID_c tmp_mms --max-seqs 50000 -c 0.5
-	mmseqs createtsv GenomeID_DB GenomeID_DB GenomeID_c GenomeID_c.tsv
-	parse_mmseqs_clusters.py -H GenomeID_c.tsv GenomeID.PG
-	```
-	To run MMseqs2 clustering for all genomes in _ProjectID.list_ :
-	```
-	mkdir tmp_mms # temporary folder for MMseqs2 runs
-	while read g; do 
-	mmseqs createdb ${g}.pep.rep ${g}_DB
-	mmseqs createindex ${g}_DB tmp_mms
-	mmseqs cluster ${g}_DB ${g}_c tmp_mms --max-seqs 50000 -c 0.5
-	mmseqs createtsv ${g}_DB ${g}_DB ${g}_c ${g}_c.tsv
-	parse_mmseqs_clusters.py -H ${g}_c.tsv ${g}.PG
-	done < ProjectID.list
-	```
-	Proceed to the next step with _GenomeID.PG_ (input #2).
-	
-	**method #2** (originally the default method) If orthoMCL is available, you can run it for each genome and get "in-paralog" groups. Convert the orthoMCL output (_mclOutput_GenomeID.txt_) to input #2:
-	```
-	parse_mclOutput.py -rH mclOutput_GenomeID.txt PG > GenomeID.PG
-	```
-	if converting multiple orthoMCL output files for genomes in *ProjectID.list*:
-	```
-	while read g; do parse_mclOutput.py mclOutput_${g}.txt PG -rH > ${g}.PG; done < ProjectID.list
-	```
-	Proceed to the next step with *GenomeID.PG* (input #2).
+**method #1** Cluster all representative protein sequences using MMseqs2 for each genome and get "in-paralog" groups. Convert the .tsv output to input #2. Assuming all representative peptide sequences for each genome is _GenomeID.pep.rep.fa_:
+```
+mkdir tmp_mms # temporary folder for MMseqs2 runs
+mmseqs createdb GenomeID.pep.rep GenomeID_DB
+mmseqs createindex GenomeID_DB tmp_mms
+mmseqs cluster GenomeID_DB GenomeID_c tmp_mms --max-seqs 50000 -c 0.5
+mmseqs createtsv GenomeID_DB GenomeID_DB GenomeID_c GenomeID_c.tsv
+parse_mmseqs_clusters.py -H GenomeID_c.tsv GenomeID.PG
+```
+To run MMseqs2 clustering for all genomes in _ProjectID.list_ :
+```
+mkdir tmp_mms # temporary folder for MMseqs2 runs
+while read g; do 
+mmseqs createdb ${g}.pep.rep ${g}_DB
+mmseqs createindex ${g}_DB tmp_mms
+mmseqs cluster ${g}_DB ${g}_c tmp_mms --max-seqs 50000 -c 0.5
+mmseqs createtsv ${g}_DB ${g}_DB ${g}_c ${g}_c.tsv
+parse_mmseqs_clusters.py -H ${g}_c.tsv ${g}.PG
+done < ProjectID.list
+```
+Proceed to the next step with _GenomeID.PG_ (input #2).
 
-	
-2. After obtaining input #2 by either **method #1** or **#2**, add input #2 to input #1 for each genome.  For example, if input #1 and #2 for *GenomeID* is named *GenomeID.gtfParsed.txt* and *GenomeID.PG*, respectively:
-	```
-	join_files_by_NthCol.py GenomeID.gtfParsed.txt 1 1 GenomeID.PG GenomeID.gtfParsed.PG.txt
-	```
-	To process all genomes listed in *ProjectID.list*:
-	```
-	while read g; do 
-	join_files_by_NthCol.py ${g}.gtfParsed.rep.txt 1 1 ${g}.PG ${g}.gtfParsed.PG.txt
-	done < ProjectID.list
-	```
+**method #2** (originally the default method) If orthoMCL is available, you can run it for each genome and get "in-paralog" groups. Convert the orthoMCL output (_mclOutput_GenomeID.txt_) to input #2:
+```
+parse_mclOutput.py -rH mclOutput_GenomeID.txt PG > GenomeID.PG
+```
+if converting multiple orthoMCL output files for genomes in *ProjectID.list*:
+```
+while read g; do parse_mclOutput.py mclOutput_${g}.txt PG -rH > ${g}.PG; done < ProjectID.list
+```
+Proceed to the next step with *GenomeID.PG* (input #2).
+
 
 ### Input #3: between-species best-hit pairs
 A tab-delimited text file with the GeneID of the query gene and its 'best-hit' or best-hit candidate GeneID in the target genome, one pair per line, for all possible pairs of genomes in *ProjectID.list*.  Below, I describe two methods using BLASTN (default) and MMseqs2 (alternative): 
 
-1.  
-	For all *GenomeIDs* in *ProjectID.list*, create a blast database for the representative CDS sequences in *GenomeID.cds.rep.fa*:
+**method #1** For all *GenomeIDs* in *ProjectID.list*, create a blast database for the representative CDS sequences in *GenomeID.cds.rep.fa*:
+
+```
+makeblastdb -in GenomeID.cds.rep.fa -dbtype nucl
+```
+To process multiple genomes listed in *ProjectID.list*:
+```
+while read g; do makeblastdb -in ${g}.cds.rep.fa -dbtype nucl; done < ProjectID.list
+```
+Create blast commands for all possible pair of genomes in *ProjectID.list*.  For blastn:
+```
+create_pairwiseBLAST_commands.py ProjectID.list -n "-task blastn -evalue 1e-5 -max_target_seqs 10 -outfmt '6 std qlen slen'" > ProjectID_pairwiseBLASTN.sh
+```
+Check `create_pairwiseBLAST_commands.py -h` for detailed options to designate folders for CDS sequences or blastn output files, as well as options to use blastp on deduced peptide sequences instead.
+
+Once blast commands (_ProjectID_pairwiseBLASTN.sh_) were created, users will want to run it in the background (e.g. using the linux _screen_ command) and multiplex if possible, depending on the computational resource.  Users can add *-num_threads* option to the string given with *-n* option in the example above. 
 	
-	```
-	makeblastdb -in GenomeID.cds.rep.fa -dbtype nucl
-	```
-	To process multiple genomes listed in *ProjectID.list*:
-	```
-	while read g; do makeblastdb -in ${g}.cds.rep.fa -dbtype nucl; done < ProjectID.list
-	```
-2. Create blast commands for all possible pair of genomes in *ProjectID.list*.  For blastn:
-	```
-	create_pairwiseBLAST_commands.py ProjectID.list -n "-task blastn -evalue 1e-5 -max_target_seqs 10 -outfmt '6 std qlen slen'" > ProjectID_pairwiseBLASTN.sh
-	```
-	Check `create_pairwiseBLAST_commands.py -h` for detailed options to designate folders for CDS sequences or blastn output files, as well as options to use blastp on deduced peptide sequences instead.
-
-	Once blast commands (_ProjectID_pairwiseBLASTN.sh_) were created, users will want to run it in the background (e.g. using the linux _screen_ command) and multiplex if possible, depending on the computational resource.  Users can add *-num_threads* option to the string given with *-n* option in the example above.
-
-	After running all pairwise blastn, you will have output files named as *out\__GenomeID1\__vs\__GenomeID2.bln.txt*, for all pairs with GenomeID1 != GenomeID2.
-
-	If the user choose to add filters for HSP_cov and/or add HSP_cov and HSP_idn (see `consolidate_blast_HSPs -h`) in the co-linearity information, see [Note 2](https://github.com/ohdongha/CL_finder#2-filtering-best-hit-pairs-based-on-hsp_cov), instead of proceeding to the item 3 below.
-3. Convert the blastn output to input #3:
-	```
-	for f in out__*.bln.txt; do 
-	f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.bln.txt}.list
-	done
-	mkdir ./BHPairs.bln; mv BestHits__*.list ./BHPairs.bln
-	```
-	This will generate input #3 for *GenomeID1* and *GenomeID2* as *BestHits\__GenomeID1\_vs\_GenomeID2.list* for all genome pairs in the folder _./BHPairs.bln_ (the scripts work for any folder name; .bln stands for blastn).  As long as the file names and formats are correct, input #3 can be created by other methods to detect similar sequences, such as blastp.
-	
-**Alternative method** Users can use peptide sequences to generate input #3 using MMseqs2.  First create and index DB for all genomes listed in _ProjectID.list_ (if **method #1** was used for input #2, this step must have been already done):
+**method #2** Users can use peptide sequences to generate input #3 using MMseqs2.  First create and index DB for all genomes listed in _ProjectID.list_ (if MMseqs2 was already used to generate the input #2, this step must have been already done):
 
 ```
 mkdir tmp_mms # temporary folder for MMseqs2 runs
@@ -172,52 +148,61 @@ And create MMseqs2 commands for all pairwise genomes using `create_pairwiseBLAST
 ```
 create_pairwiseBLAST_commands.py ProjectID -M -n "--max-seqs 10" > ProjectID_pairwiseMMseqs2.bash
 ```
+Run the MMseqs2 command (_ProjectID_pairwiseMMseqs2.sh_).  This step is usually very fast (<1 min per genome).
 
-After running the MMseqs2 command (_ProjectID_pairwiseMMseqs2.sh_), the results can be converted to input #3 in the same way as above:
-
+**After running all pairwise comparison** you will have output files named as *out\__GenomeID1\__vs\__GenomeID2.txt*, for all pairs with GenomeID1 != GenomeID2.  Convert these blastn (or MMseqs2) results to input #3:
 ```
-for f in out__*.mmseqs2.txt; do 
-f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.mmseqs2.txt}.list
+for f in out__*.txt; do 
+f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.txt}.list
 done
-mkdir ./BHPairs.mms; mv BestHits__*.list ./BHPairs.mms
+mkdir ./BHPairs; mv BestHits__*.list ./BHPairs
 ```
-(Note that when MMseqs2 was used for input #2, _BHPairs.bln_ in the all following steps below should be replaced with _BHPairs.mms_)
-	
+This will generate input #3 for *GenomeID1* and *GenomeID2* as *BestHits\__GenomeID1\_vs\_GenomeID2.list* for all genome pairs in the folder _./BHPairs_.  As long as the file names and formats are correct, input #3 can be created by other methods to detect similar sequences, such as blastp.
+
+* Users can add filters to BHPairs at this step, to remove BHPairs with too low HSP_cov, HSP_len, and/or HSP_idn (see `consolidate_blast_HSPs -h`). See [Note 2](https://github.com/ohdongha/CL_finder#2-filtering-best-hit-pairs-based-on-hsp_cov)
+
 ---
 ## Running CLfinder
 At this point, the following should be ready:
 - List of _GenomeIDs_ in _ProjectID.list_
-- Combined input #1 and #2 for each _GenomeID_, as *GenomeID_gtfParsed.PG.txt*
-- Input #3 for all pairs of genomes, as *BestHits\__GenomeID1\__vs\__GenomeID2.list* all located in the folder _./BHPairs.bln_.
+- Input #1 as _GenomeID.gtfParsed.txt_ for all _GenomeIDs_ in _ProjectID.list_
+- Input #2 as _GenomeID.PG_ for all _GenomeIDs_ in _ProjectID.list_
+- Input #3 for all pairs of genomes, as *BestHits\__GenomeID1\_vs\_GenomeID2.list* in the folder _./BHPairs_
 
 Now CLfinder module is ready to run:
 
-1. Add *LocusID* and tandem duplication information to *GenomeID_gtfParsed.PG.txt*:
+1. Combine Input #1 (*GenomeID.gtfParsed.txt*) and Input #2 (*GenomeID.PG*) and add tandem duplication information:
+	```
+	join_files_by_NthCol.py GenomeID.gtfParsed.txt 1 1 GenomeID.PG GenomeID.gtfParsed.PG.txt
+	TD_finder.py GenomeID.gtfParsed.PG.txt GenomeID 4 GenomeID.gtfParsed.TD.txt
+	```
+	To process all genomes listed in *ProjectID.list*:
 	```
 	while read g; do 
+	join_files_by_NthCol.py ${g}.gtfParsed.rep.txt 1 1 ${g}.PG ${g}.gtfParsed.PG.txt
 	TD_finder.py ${g}.gtfParsed.PG.txt $g 4 ${g}.gtfParsed.TD.txt
-	done < ProjectID.list > ProjectID_TD.log 2>&1
+	done < ProjectID.list
 	```
 	This will identify all paralogs in the same paralog group and within 4 loci (min_TD_loci) as tandem duplicated (_td_), and report the number of _td_ events and genes in those events as _ProjectID_TD.log_. Users can modify the *min_TD_loci* parameter as needed. _GenomeID.gtfParsed.TD.txt_ files now include columns for _td_ events as well as numerical _LocusIDs_ for each genome.
 
 2. Run CLfinder:
 	```
-	CL_finder_multi.py ProjectID -nr -T .gtfParsed.TD.txt -b ./BHPairs.bln -W 20 -N 3 -G 20 -o ./ProjectID_bln
+	CL_finder_multi.py ProjectID -nr -T .gtfParsed.TD.txt -b ./BHPairs -W 20 -N 3 -G 20 -o ./ProjectID_out
 	```
 	This will run CLfinder for each _GenomeID_, comparing it to all other genomes, and report (with _-r_ option) numbers of co-linear, lineage-specific, and transposed best-hit pairs, shared _td_ events, etc. Users can modify the _window_size_ (_-W_), _num_loci_trshld_ (_-N_), and _gap_loci_trshld_ (_-G_) as needed.  With _-n_ option, it also create an output _ProjectID.4OrthNet.input_ which can be used for updating best-hit pairs (next section) or building OrhNets.  See `CL_finder_multi.py -h` for details on options and parameters.
 
 3. Update best-hit pairs:
 	```
-	update_BestHitPairs.py ProjectID ./ProjectID_bln/ProjectID.4OrthNet.input -b BHPairs.bln -o BHPairs.bln.1
+	update_BestHitPairs.py ProjectID ./ProjectID_out/ProjectID.4OrthNet.input -b BHPairs -o BHPairs.1
 	```
 	CLfinder can search for an alternative best-hit among many best-hit candidates with less similarity scores, if such alternative best-hit can achieve a reciprocal best-hit pairs.  This process will update best-hit pairs to prefer reciprocal relationship.
 	```
-	CL_finder_multi.py ProjectID -unrp -T .gtfParsed.TD.txt -b BHPairs.bln.1 -o ProjectID_bln.1 -W 20 -N 3 -G 20
+	CL_finder_multi.py ProjectID -unrp -T .gtfParsed.TD.txt -b BHPairs.1 -o ProjectID_out.1 -W 20 -N 3 -G 20
 	```
 	Re-run CLfinder based on the updated best-hit pairs (_-u_ option).  With _-p_ option, CLfinder also print reciprocal best-hit pairs and co-linearity between them for all pairs of genomes, which can be useful for determining synonymous (_Ks_) or four degenerated site (_4d_) substitution rates between pairs ([Note 3](https://github.com/ohdongha/CL_finder#3-calculating-substitution-rates-between-best-hit-pairs-with-codeml)).
 4. Creating a summary report for all pairwise CLfinder analyses:
  	```
-	create_CLfm_summary.py ProjectID CLfinder_summary.txt -p ProjectID_bln.1
+	create_CLfm_summary.py ProjectID CLfinder_summary.txt -p ProjectID_out.1
 	```
 	This script looks into a CLfinder output folder and create a summary matrix for all query-target genome pairs, reporting number of co-linear (_cl_), lineage-specific (_ls_), transposed (_tr_), and not determined (_nd_) due to too fragmented genome scaffold assembly.  See `create_CLfm_summary.py -h` for details.
 ---
@@ -243,8 +228,8 @@ The OrthNet module accept a tab-delimited text file with two genes, i.e., best-h
 
 3. Update best-hit pairs and OrthNets after mcl:
 	```
-	update_OrthNet_after_mcl.py ProjectID mcl/ProjectID_TD1.5_rC1.2_rNC1.0_uC0.3_uNC0.25_I1.2_mclOut.PC.txt -b BHPairs.bln.1 -o1 BHPairs.bln.2 -o2 ProjectID_bln.2 -u
-	format_OrthNetEdges_4SIF.py ./ProjectID_bln.2/ProjectID.clstrd.afterMCL.edges
+	update_OrthNet_after_mcl.py ProjectID mcl/ProjectID_TD1.5_rC1.2_rNC1.0_uC0.3_uNC0.25_I1.2_mclOut.PC.txt -b BHPairs.1 -o1 BHPairs.2 -o2 ProjectID_out.2 -u
+	format_OrthNetEdges_4SIF.py ./ProjectID_out.2/ProjectID.clstrd.afterMCL.edges
 	```
 	This process again searches for alternative best-hit pairs to maximize pairing within each OrthNet after the _mcl_ clustering. Then, reformat the _.edges_ file to a _.sif_ file to finalize OrthNets:
 
@@ -252,11 +237,11 @@ The OrthNet module accept a tab-delimited text file with two genes, i.e., best-h
 
 4. Run CLfinder one last time to reflect updated best-hit pairs and OrthNet information:
 	```
-	CL_finder_multi.py ProjectID -unr -b BHPairs.bln.2 -o ProjectID_bln.2 -W 20 -N 3 -G 20
+	CL_finder_multi.py ProjectID -unr -b BHPairs.2 -o ProjectID_out.2 -W 20 -N 3 -G 20
 	```
 	Users may want to re-create the CLfinder summary report at this point:
  	```
-	create_CLfm_summary.py ProjectID CLfinder_summary.afterOrthNet.txt -p ProjectID_bln.2
+	create_CLfm_summary.py ProjectID CLfinder_summary.afterOrthNet.txt -p ProjectID_out.2
 	```
 ---
 ## Searching OrthNets
@@ -310,7 +295,7 @@ Separately, this step generate a summary including the following information for
 2. Combine CLfinder results and add annotation:
 	First, combine all CLfinder results in the output folder of the last ```CL_finder_multi.py``` run. The '-O' option adds the information for ORF lengths for each locus and its best-hits.  See ```combine_CLfm_results.py -h``` for more details. 
 	```
-	combine_CLfm_results.py ProjectID temp_output_combined -p ./ProjectID_bln.2 -F .20.3.20.afterMCL.txt -O
+	combine_CLfm_results.py ProjectID temp_output_combined -p ./ProjectID_out.2 -F .20.3.20.afterMCL.txt -O
 	join_files_by_NthCol.py temp_output_combined 2 1 Annotation_consolidated.txt ProjectID.combined.annotated.txt e
 	```
 	The <i>ProjectID.combined.annotated.txt</i> is the final output. 
@@ -319,7 +304,7 @@ Separately, this step generate a summary including the following information for
 
 	The ```update_OrthNet_after_mcl.py``` script (see [Running OrthNet](https://github.com/ohdongha/CL_finder#running-orthnet) item #3) generates an <i>.mclOutput</i> output file, which can be used for creating an annotated summary of OrthNets. See ```parse_mclOutput.py -h``` for more details.
 	```
-	parse_mclOutput.py -Hsrx -a Annotation_consolidated.short.txt -p _internal_ ./ProjectID_bln.2/ProjectID.clstrd.afterMCL.nodes.mclOutput ON
+	parse_mclOutput.py -Hsrx -a Annotation_consolidated.short.txt -p _internal_ ./ProjectID_out.2/ProjectID.clstrd.afterMCL.nodes.mclOutput ON
 	```
 	This will create <i>ProjectID.all.mclOutput.summary.txt</i>, which contains counts of all nodes for each species, as well as top three representative annotations (i.e. annotations appearing most frequently among the members of the OrthNet), for each OrthNet.
 	
