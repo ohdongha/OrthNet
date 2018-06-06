@@ -89,7 +89,7 @@ A tab-delimited text file with *GeneID* and paralog group ID (*PGID*), one gene 
 	mmseqs createtsv GenomeID_DB GenomeID_DB GenomeID_c GenomeID_c.tsv
 	parse_mmseqs_clusters.py -H GenomeID_c.tsv GenomeID.PG
 	```
-	Proceed to the next step with _GenomeID.PG_ (input #2).  To run MMseqs2 clustering for all genomes in _ProjectID.list_ :
+	To run MMseqs2 clustering for all genomes in _ProjectID.list_ :
 	```
 	mkdir tmp_mms # temporary folder for MMseqs2 runs
 	while read g; do 
@@ -100,6 +100,8 @@ A tab-delimited text file with *GeneID* and paralog group ID (*PGID*), one gene 
 	parse_mmseqs_clusters.py -H ${g}_c.tsv ${g}.PG
 	done < ProjectID.list
 	```
+	Proceed to the next step with _GenomeID.PG_ (input #2).
+	
 	**method #2** (originally the default method) If orthoMCL is available, you can run it for each genome and get "in-paralog" groups. Convert the orthoMCL output (_mclOutput_GenomeID.txt_) to input #2:
 	```
 	parse_mclOutput.py -rH mclOutput_GenomeID.txt PG > GenomeID.PG
@@ -110,11 +112,12 @@ A tab-delimited text file with *GeneID* and paralog group ID (*PGID*), one gene 
 	```
 	Proceed to the next step with *GenomeID.PG* (input #2).
 
-2. For each genome, add input #2 to input #1 for each genome.  For example, if input #1 and #2 for *GenomeID* is named *GenomeID.gtfParsed.txt* and *GenomeID.PG*, respectively:
+	
+2. After obtaining input #2 by either **method #1** or **#2**, add input #2 to input #1 for each genome.  For example, if input #1 and #2 for *GenomeID* is named *GenomeID.gtfParsed.txt* and *GenomeID.PG*, respectively:
 	```
 	join_files_by_NthCol.py GenomeID.gtfParsed.txt 1 1 GenomeID.PG GenomeID.gtfParsed.PG.txt
 	```
-	To process multiple genomes listed in *ProjectID.list*:
+	To process all genomes listed in *ProjectID.list*:
 	```
 	while read g; do join_files_by_NthCol.py ${g}.gtfParsed.rep.txt 1 1 ${g}.PG ${g}.gtfParsed.PG.txt; done < ProjectID.list
 	```
@@ -138,7 +141,7 @@ A tab-delimited text file with the GeneID of the query gene and its 'best-hit' o
 	```
 	Check `create_pairwiseBLAST_commands.py -h` for detailed options to designate folders for CDS sequences or blastn output files, as well as options to use blastp on deduced peptide sequences instead.
 
-	Once blast commands were created, users will want to run it in the background (e.g. using the linux _screen_ command) and multiplex if possible, depending on the computational resource.  Users can add *-num_threads* option to the string given with *-n* option in the example above.
+	Once blast commands (_ProjectID_pairwiseBLASTN.sh_) were created, users will want to run it in the background (e.g. using the linux _screen_ command) and multiplex if possible, depending on the computational resource.  Users can add *-num_threads* option to the string given with *-n* option in the example above.
 
 	After running all pairwise blastn, you will have output files named as *out\__GenomeID1\__vs\__GenomeID2.bln.txt*, for all pairs with GenomeID1 != GenomeID2.
 
@@ -150,7 +153,7 @@ A tab-delimited text file with the GeneID of the query gene and its 'best-hit' o
 	```
 	This will generate input #3 for *GenomeID1* and *GenomeID2* as *BestHits\__GenomeID1\_vs\_GenomeID2.list* for all genome pairs in the folder _./BHPairs.bln_ (the scripts work for any folder name; .bln stands for blastn).  As long as the file names and formats are correct, input #3 can be created by other methods to detect similar sequences, such as blastp.
 	
-	**Alternative** Users can use peptide sequences to generate input #3 using MMseqs2.  First create and index DB for all genomes listed in _ProjectID.list_ (if **method #1** was used for input #2, this step must have been already done):
+	**Alternative method** Users can use peptide sequences to generate input #3 using MMseqs2.  First create and index DB for all genomes listed in _ProjectID.list_ (if **method #1** was used for input #2, this step must have been already done):
 	```
 	mkdir tmp_mms # temporary folder for MMseqs2 runs
 	while read g; do 
@@ -162,11 +165,12 @@ A tab-delimited text file with the GeneID of the query gene and its 'best-hit' o
 	```
 	create_pairwiseBLAST_commands.py ProjectID -M -n "--max-seqs 10" > ProjectID_pairwiseMMseqs2.bash
 	```
-	After running all MMseqs2 commands, the results can be converted to input #3 in the same way as above:
+	After running the MMseqs2 command (_ProjectID_pairwiseMMseqs2.sh_), the results can be converted to input #3 in the same way as above:
 	```
 	for f in out__*.mmseqs2.txt; do f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.mmseqs2.txt}.list; done
 	mkdir ./BHPairs.mms; mv BestHits__*.list ./BHPairs.mms
 	```
+	(Note that when MMseqs2 was used for input #2, _BHPairs.bln_ in the all following steps below should be replaced with _BHPairs.mms_)
 	
 ---
 ## Running CLfinder
