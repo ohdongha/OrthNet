@@ -33,13 +33,16 @@ synopsis2 = "detailed description:\n\
         occurance as subject, tab-delimited, one node per line.\n\
      (2) <Project>.clstrd.edges: clstrID, quryID, sbjtID, CL_type(q->s), and\n\
        CL_type(s->q), tab-delimited, one edge per line.\n\
-  - '-o'|'--Path2Output' defines the output path (dafault='./Output'). \n\
+  - '-i'|'--input': input file name; default=""./<Project>.4OrthNet.input""\n\
+  - '-o'|'--Path2Output' defines the output path ; default=""./Output""\n\
   - '-s'|'--single_copies': add a column to both output files to identify\n\
      OrthNets containing all nodes from different species('1') or not('0'); if\n\
      '-d' is also specified, only non-TD nodes are considered.\n\n\
- by ohdongha@gmail.com ver0.2 20160822\n"
+ by ohdongha@gmail.com ver0.2.3 20180515\n"
  
 #version_history
+#20180515 ver 0.2.3 # bug fix, to remove conflicts when multiple thread of cON is running
+#20180514 ver 0.2.2 # can accept input file name as an option
 #20180301 ver 0.2.1 # accept TD_finder.py output file formats as a string ('-T' option); if <Project> argument ends with '.list', just ignore it
 #20160822 ver 0.2 # adding option to create edges for TD genes ('-t' option)
 #20160812 ver 0.1 # modified to work with the updated 'CL_finder_multi.py'
@@ -54,6 +57,7 @@ parser.add_argument('-d', '--add_TD_edges', action="store_true", default=False, 
 parser.add_argument('-s', '--single_copies', action="store_true", default=False, help="see below")
 parser.add_argument('-t', '--Path2TDfiles', dest="Path2TDfiles", type=str, default=".", help="PATH to 'TDfiles', required for -d; default='.'")
 parser.add_argument('-T', '--TDfile_nameFmt', dest="TDfile_nameFmt", type=str, default=".", help="default='.gtfParsed.pc.TD.txt'; see below")
+parser.add_argument('-i', '--input', dest="input", type=str, default="__NA__", help="see below") 
 parser.add_argument('-o', '--Path2Output', dest="Path2Output", type=str, default="./Output", help="PATH for output files; default='./Output'") 
 args = parser.parse_args()
 
@@ -70,6 +74,12 @@ except OSError:
 
 ## defining expected format of input and output file names.  modify as needed:
 input_TDfiles_filename_format = path_TDfiles + "%s" + args.TDfile_nameFmt
+
+## define input file name
+if args.input == "__NA__":
+	input_4OrthNet = args.Project + ".4OrthNet.input"
+else:
+	input_4OrthNet = args.input
 
 
 #######################################################
@@ -123,13 +133,13 @@ if args.add_TD_edges == True:
 		print "%d nodes in %d events have been collected," % (num_TD_nodes, num_TDid)
 
 	### 2.3. adding TD_nodes to fin_4OrthNet
-	subprocess.call("cp " + args.Project + '.4OrthNet.input ' + args.Project + '.4OrthNet.TDadded.input', shell=True)		
-	fout_4OrthNet_fxd = open(args.Project + '.4OrthNet.TDadded.input', "a")
+	subprocess.call("cp " + input_4OrthNet + ' ' + input_4OrthNet + '.TDadded', shell=True)		
+	fout_4OrthNet_fxd = open(input_4OrthNet + '.TDadded', "a")
 	
 	for key in nodes_in_TD_dict:
 		for i in range( len( nodes_in_TD_dict[key] ) - 1 ):
 			fout_4OrthNet_fxd.write( nodes_in_TD_dict[key][i] + '\t' + nodes_in_TD_dict[key][i+1] + '\tTD\n')
-	fout_4OrthNet_fxd.close()	
+	fout_4OrthNet_fxd.close()
 
 	
 ###############################################################################
@@ -137,9 +147,9 @@ if args.add_TD_edges == True:
 ###############################################################################
 
 if args.add_TD_edges == True:
-	fin_4OrthNet = open(args.Project + '.4OrthNet.TDadded.input', "rU")
+	fin_4OrthNet = open(input_4OrthNet + '.TDadded', "rU")
 else:
-	fin_4OrthNet = open(args.Project + '.4OrthNet.input', "rU")
+	fin_4OrthNet = open(input_4OrthNet, "rU")
 fout_nodes = open(path_output + args.Project + ".clstrd.nodes", "w")
 fout_edges = open(path_output + args.Project + ".clstrd.edges", "w")
 fout_log = open(path_output + args.Project + ".clstrd.log", "w")		
@@ -391,8 +401,8 @@ fout_nodes.close()
 fout_edges.close()
 
 # sort report files
-command1 = "awk 'NR == 1; NR > 1 {print $0 | \"sort -k2,2n -k5,5nr\"}' " + path_output + args.Project + ".clstrd.nodes > __clstrhd_temp__; mv __clstrhd_temp__ " + path_output + args.Project + ".clstrd.nodes"
-command2 = "awk 'NR == 1; NR > 1 {print $0 | \"sort -k1,1n -k2,2nr\"}' " + path_output + args.Project + ".clstrd.edges > __clstrhd_temp__; mv __clstrhd_temp__ " + path_output + args.Project + ".clstrd.edges"
+command1 = "awk 'NR == 1; NR > 1 {print $0 | \"sort -k2,2n -k5,5nr\"}' " + path_output + args.Project + ".clstrd.nodes > " + path_output + "__clstrhd_temp__; mv " + path_output + "__clstrhd_temp__ " + path_output + args.Project + ".clstrd.nodes"
+command2 = "awk 'NR == 1; NR > 1 {print $0 | \"sort -k1,1n -k2,2nr\"}' " + path_output + args.Project + ".clstrd.edges > " + path_output + "__clstrhd_temp__; mv " + path_output + "__clstrhd_temp__ " + path_output + args.Project + ".clstrd.edges"
 subprocess.call(command1, shell=True)
 subprocess.call(command2, shell=True)
 

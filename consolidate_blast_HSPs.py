@@ -18,7 +18,7 @@ synopsis2 = "detailed description:\n\
  2. Output:\n\
   - <output> contains the following for each query-subject pair, tab-delimited:\n\
      query(q), subject(s), num_HSPs, total_score, qHSP_nt, qHSP_ovl, qIDN_nt,\n\
-      qHSP_cov, qHSP_idn, sHSP_nt, sIDN_nt, sIDN_cov, sHSP_idn[, stitle]\n\
+     qHSP_cov, qHSP_idn, sHSP_nt, sHSP_ovl, sIDN_nt, sIDN_cov, and sHSP_idn\n\
   - total_sc == sum of blast hit scores for all HSPs,\n\
   - HSP_nt == total nucleotides (nt) in HSPs,\n\
   - IDN_nt == approximate identical nt, i.e., HSP_nt * average%IDN / 100,\n\
@@ -28,20 +28,23 @@ synopsis2 = "detailed description:\n\
  3. Options:\n\
   - '-H/--header': include a header line in the output; default==False\n\
   - '-s/--stitle': expect blast output with -outfmt '6 std qlen slen stitle'\n\
-     ; default==False\n\
-  - '--min_qHSP_cov': minimum qHSP_cov to keep (0~1), default==0,\n\
-  - '--min_sHSP_cov': minimum sHSP_cov to keep (0~1), default==0,\n\
-  - '--min_qHSP_idn': minimum qHSP_idn to keep (0~1), default==0,\n\
-  - '--min_sHSP_idn': minimum sHSP_idn to keep (0~1), default==0,\n\
+     stitle is added as an additional last column; default==False\n\
+  - '-p/--blastp': input is from blastp/mmseqs; default==False\n\
+  - '--min_qHSP_cov': minimum qHSP_cov to keep (0.0~1.0), default==0.0,\n\
+  - '--min_sHSP_cov': minimum sHSP_cov to keep (0.0~1.0), default==0.0,\n\
+  - '--min_qHSP_idn': minimum qHSP_idn to keep (0.0~1.0), default==0.0,\n\
+  - '--min_sHSP_idn': minimum sHSP_idn to keep (0.0~1.0), default==0.0,\n\
  4. Misc:\n\
   - for BLASTP results, '_nt' becomes '_aa (amino acids)',\n\
   - ignores strands of HSPs and calculates just the total coverages.\n\
- by ohdongha@gmail.com ver0.0.2 20180312\n"
+ by ohdongha@gmail.com ver0.0.4 20180417\n"
 
 
 output_header_list = ["q", "s", "num_HSPs", "total_sc", "qHSP_nt", "qHSP_ovl", "qIDN_nt", "qHSP_cov", "qHSP_idn", "sHSP_nt", "sHSP_ovl", "sIDN_nt", "sHSP_cov", "sHSP_idn"]
  
 #version_history
+#20180417 ver 0.0.4 deals with mmseqs2 output, where percent_idn is actually proportion_idn < 1.0 
+#20180404 ver 0.0.3 deals with cases when qlen == 0 
 #20180306 ver 0.0.2 deals with -outfmt '6 std qlen slen stitle' # 0312 bug fixed
 #20180103 ver 0.0.1 added total_sc, qHSP_ovl, sHSP_ovl; deal with HSPs in reverse strand of subject,
 #20180102 ver 0.0
@@ -55,6 +58,7 @@ parser.add_argument('output', type=argparse.FileType('w'))
 ## options to filter results
 parser.add_argument('-H', '--header', action="store_true", default=False, help="see below")
 parser.add_argument('-s', '--stitle', action="store_true", default=False, help="see below")
+parser.add_argument('-p', '--blastp', action="store_true", default=False, help="see below")
 parser.add_argument('--min_qHSP_cov', dest="min_qHSP_cov", type=float, default=0.0)
 parser.add_argument('--min_sHSP_cov', dest="min_sHSP_cov", type=float, default=0.0)
 parser.add_argument('--min_qHSP_idn', dest="min_qHSP_idn", type=float, default=0.0)
@@ -75,7 +79,10 @@ first_line = True
 output_line = list()
 
 # print header
-output_header_list = ["q", "s", "num_HSPs", "total_sc", "qHSP_nt", "qHSP_ovl", "qIDN_nt", "qHSP_cov", "qHSP_idn", "sHSP_nt", "sHSP_ovl", "sIDN_nt", "sHSP_cov", "sHSP_idn"]
+if args.blastp:
+	output_header_list = ["q", "s", "num_HSPs", "total_sc", "qHSP_aa", "qHSP_ovl", "qIDN_aa", "qHSP_cov", "qHSP_idn", "sHSP_aa", "sHSP_ovl", "sIDN_aa", "sHSP_cov", "sHSP_idn"]
+else:
+	output_header_list = ["q", "s", "num_HSPs", "total_sc", "qHSP_nt", "qHSP_ovl", "qIDN_nt", "qHSP_cov", "qHSP_idn", "sHSP_nt", "sHSP_ovl", "sIDN_nt", "sHSP_cov", "sHSP_idn"]
 if args.stitle:
 	output_header_list.append("stitle")
 if args.header:
@@ -84,6 +91,7 @@ if args.header:
 query = ""
 subject = ""
 percent_idn = 0.0
+idn_in_proportion = False
 qS = 0
 qE = 0
 sS = 0 
@@ -114,14 +122,18 @@ sHSP_idn = 0.0
 for line in args.input:
 	tok = line.split('\t')
 	
-		
 	if tok[0] != query or tok[1] != subject:
 		# print the previous query-species pair, if it is not the first line (don't forget to also print the last line later)
 		if first_line == False:
-			qHSP_cov = float(qHSP_nt) / qlen
-			qHSP_idn = float(qIDN_nt) / qHSP_nt
-			sHSP_cov = float(sHSP_nt) / slen
-			sHSP_idn = float(sIDN_nt) / sHSP_nt
+			try:
+				qHSP_cov = float(qHSP_nt) / qlen
+				qHSP_idn = float(qIDN_nt) / qHSP_nt
+				sHSP_cov = float(sHSP_nt) / slen
+				sHSP_idn = float(sIDN_nt) / sHSP_nt
+			except ZeroDivisionError:
+				print "ZeroDivisionError in line: %s" % line.strip()
+				qHSP_cov = 0 ; qHSP_idn = 0 ; sHSP_cov = 0; sHSP_idn = 0
+				
 			if qHSP_cov >= min_qHSP_cov and qHSP_idn >= min_qHSP_idn and \
 					sHSP_cov >= min_sHSP_cov and sHSP_idn >= min_sHSP_idn:
 				output_line = [query, subject, '%d'%num_HSPs, '%.1f'%total_sc,\
@@ -163,6 +175,11 @@ for line in args.input:
 		
 	# now process each HSP ...			
 	percent_idn = float(tok[2])
+	if percent_idn < 1.0 or idn_in_proportion:
+		if not idn_in_proportion:
+			idn_in_proportion = True
+			print "identity/similarity values appear to be proportions, rather than percentages,"
+		percent_idn = percent_idn * 100.0
 	qs = int(tok[6])
 	qe = int(tok[7]) 
 	ss = int(tok[8])
@@ -193,10 +210,15 @@ for line in args.input:
 	sIDN_nt += int( sHSP_nt_2bAdded * percent_idn / 100.0 )
 	
 # process the last HSP:
-qHSP_cov = float(qHSP_nt) / qlen
-qHSP_idn = float(qIDN_nt) / qHSP_nt
-sHSP_cov = float(sHSP_nt) / slen
-sHSP_idn = float(sIDN_nt) / sHSP_nt
+try:
+	qHSP_cov = float(qHSP_nt) / qlen
+	qHSP_idn = float(qIDN_nt) / qHSP_nt
+	sHSP_cov = float(sHSP_nt) / slen
+	sHSP_idn = float(sIDN_nt) / sHSP_nt
+except ZeroDivisionError:
+	print "ZeroDivisionError in the last line!" 
+	qHSP_cov = 0 ; qHSP_idn = 0 ; sHSP_cov = 0; sHSP_idn = 0
+
 if qHSP_cov >= min_qHSP_cov and qHSP_idn >= min_qHSP_idn and \
 		sHSP_cov >= min_sHSP_cov and sHSP_idn >= min_sHSP_idn:
 	output_line = [query, subject, '%d'%num_HSPs, '%.1f'%total_sc,\

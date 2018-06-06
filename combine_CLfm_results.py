@@ -28,9 +28,10 @@ synopsis2 = "detailed description:\n\
   - '-O'|'--ORFsize': add three more columns, median and stdev of ortholog CDS length\n\
      (mdCDS_l and sdCDS_l) and proportion of CDS_l compared to the median (%mdCDS_l),\n\
 	 for each query gene; all geneIDs should be unique; default=False\n\
- by ohdongha@gmail.com ver0.1 20180307\n"
+ by ohdongha@gmail.com ver0.1.1 20180516\n"
  
 #version_history
+#20180516 ver 0.1.1 print a warning, instead of KeyError, when a geneID not in TDfiles appears in CLfinder results for some reason, 
 #20180307 ver 0.1 '-O' option added to compare ORF sizes among BestHits,
 #20180306 ver 0.0
 
@@ -191,7 +192,10 @@ if args.ORFsize:
 			for i in range(0, len(spcsID_list) ):
 				ortholog_geneID = tok[ colNum4orthologGeneID ]
 				if ortholog_geneID != "" and ortholog_geneID != "na":
-					ortholog_CDSlen_list.append( CDSlen_dict[ ortholog_geneID ] )
+					try:
+						ortholog_CDSlen_list.append( CDSlen_dict[ ortholog_geneID ] )
+					except KeyError:
+						print "warning: %s appears not existing among TDfiles" % ortholog_geneID
 				colNum4orthologGeneID += 5
 			# printing
 			if len(ortholog_CDSlen_list) > 0:

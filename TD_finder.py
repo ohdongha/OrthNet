@@ -21,9 +21,10 @@ TD_finder.py <input.PG.txt> <species_code> <N> <output.txt>\n\n\
  - if a locus has gene(s) with the same PGid (defined by 'parse_OrthoMCL.py'), within the adjacent <N> loci,\n\
      then the locus is tandem duplicated (TD), and given a TDid. \n\
  - TDid contains the <species_code>, PGid, 'TD', and a unique number (e.g. 'Spc|PG_xxxxx__TDyy')\n\
- by ohdongha@gmail.com 20170317 ver 0.2\n"
+ by ohdongha@gmail.com 20180605 ver 0.2.3\n"
 
 #version_history
+#20180605 ver 0.2.3 modified to accept both OG or PG, for reverse compatibility with the ancient version -_-;;;
 #20171225 ver 0.2.2 nomenclature changed: OG (Ortholog Group) -> PG (Paralog Group)
 #20170510 ver 0.2.1 bug fixed (header)
 #20170317 ver 0.2 synopsis modified
@@ -82,7 +83,7 @@ for line in fin_PG:
 		if first_line: # 170510 bug fix
 			header = line.strip()
 			first_line = False # 170510 bug fix
-		elif tok[11][0:2] == 'na' or tok[11][0:3] == 'PG_' :
+		elif tok[11][0:2] == 'na' or tok[11][0:2] == 'PG' or tok[11][0:2] == 'OG':
 			previous_chr = current_chr
 			current_chr = tok[1].strip()
 			current_PG = tok[11].strip()
@@ -132,7 +133,7 @@ for key in sorted(PG_loci_dict):
 			if n==1 or TD_continue == 0 :
 				number_TD_in_PG = number_TD_in_PG + 1
 #				TDid = key + '_' + species_code + '_TD' + '%02d' % number_TD_in_PG
-				TDid = species_code + '|' + key + '__TD' + '%02d' % number_TD_in_PG
+				TDid = species_code + '|' + key + '_TD' + '%02d' % number_TD_in_PG # 180506 '__TD' -> '_TD' # let's reduce unnecessary underscores as much as possible
 				number_TD_total = number_TD_total + 1
 				TD_continue = 1
 			TDid_dict[current_locus] = TDid

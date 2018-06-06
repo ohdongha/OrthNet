@@ -31,9 +31,10 @@ synopsis2 = "detailed description:\n\
      details,\n\
   - Use '-m 0' to print out values for all nodes.  In this case, the default\n\
      <output> is '<ProjectID>.OrthNet.all'\n\
- by ohdongha@gmail.com ver0.0 20180329\n"
+ by ohdongha@gmail.com ver0.1 20180423\n"
  
 #version_history
+#20180423 ver 0.1 minor fix for backward compatibility (look for "CDS_len" columns if "CDS_l" doesn't exist
 #20180329 ver 0.0
 
 parser = argparse.ArgumentParser(description = synopsis1, epilog = synopsis2, formatter_class = RawTextHelpFormatter)
@@ -106,11 +107,14 @@ if args.mclOutput:
 	geneID_OrthNet_dict = dict() # key = OrthNetID, value = a list of geneIDs with cORFs in the OrthNet
 
 for line in fin:
-	tok = line.split('\t')
+	tok = line.strip().split('\t')
 	# parsing the input file header
 	if header:
 		colIndex_spcs = tok.index("spcs")
-		colIndex_CDSl = tok.index("CDS_l")
+		try:
+			colIndex_CDSl = tok.index("CDS_l")
+		except ValueError:
+			colIndex_CDSl = tok.index("CDS_len")
 		colIndex_ONid = tok.index("OrthNetID")
 		colIndex_pmCl = tok.index("%mdCDS_l")
 		if args.mclOutput:
@@ -126,8 +130,8 @@ for line in fin:
 		except ValueError:
 			print "CDS_l %s or " % tok[ colIndex_CDSl ] + "%" + \
 					"mdCDS_l %s is not an integer?" % tok[ colIndex_pmCl ].strip() 
-		except KeyError:
-			print "some columns are missing? line= %s" % line
+		except IndexError:
+			print "missing columns in: %s" % line.strip()
 		
 		if OrthNetID != "":
 			if args.mclOutput:

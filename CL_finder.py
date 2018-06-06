@@ -46,9 +46,11 @@ synopsis2 = "detailed description:\n\
   - with '-u' option, the 3rd column of <BestHitPairs> indicate which subject\n\
      locus should be the 'BestHit'; the 3rd column is to be added by either\n\
      'update_BestHitPairs.py', 'updated_OrthNet_after_mcl.py', or both.\n\n\
- by ohdongha@gmail.com 20171225 ver 0.5.3\n"
+ by ohdongha@gmail.com 20180514 ver 0.5.5\n"
 
 #version_history
+#20180514 ver 0.5.5 # minor bug fix: made tolerant old nomenclature, either spcsIDlocusID or spcsID_locusID
+#20180417 ver 0.5.4 # minor bug fix: made tolerant old nomenclature, OG (Ortholog Group)
 #20171225 ver 0.5.3 # nomenclature changed: OG (Ortholog Group) -> PG (Paralog Group)
 #20170316 ver 0.5.2 # 'translocated (tlc)' is now called 'transposed (tr)'
 #20160911 ver 0.5.1 # count the subject locus when deciding CL
@@ -124,7 +126,9 @@ number_genes_sp2 = 0
 header = 1
 for line in args.File4Qury:
 	if header == 1:
-		sp1_code = line.split('\t')[11].replace('_PG','').strip()
+		sp1_code = line.split('\t')[12].replace('locusID','').strip() # getting the spcsID from the header # v0.5.5 fix
+		if sp1_code.endswith('_'): # v0.5.5 fix
+			sp1_code = sp1_code[:-1]
 		header = 0
 	else:	
 		try:
@@ -149,7 +153,9 @@ for line in args.File4Qury:
 header = 1
 for line in args.File4Sbjt:
 	if header == 1:
-		sp2_code = line.split('\t')[11].replace('_PG','').strip()
+		sp2_code = line.split('\t')[12].replace('locusID','').strip() # getting the spcsID from the header # v0.5.5 fix
+		if sp2_code.endswith('_'): # v0.5.5 fix
+			sp2_code = sp2_code[:-1]
 		header = 0
 	else:	
 		try:
@@ -220,7 +226,7 @@ header = 1
 args.File4Qury.seek(0) # reading from the beginning of the File4Qury again
 for line in args.File4Qury:
 	if header == 1:
-		sp1_code = line.split('\t')[11].replace('_PG','').strip()
+		#sp1_code = line.split('\t')[12].replace('_locusID','').strip()
 		header = 0
 	else:	
 		try:
@@ -347,7 +353,7 @@ for line in args.File4Qury:
 	if header == 1:
 		args.Outfile.write(line.strip() + '\t' \
 					+ sp1_code + '-' + sp2_code + "_CL" + str(window_size) + "." + str(num_CL_trshld) + "." + str(gap_CL_trshld) + '\t' \
-					+ sp2_code + "_geneID" + '\t' + sp2_code + "_PG" + '\t' + sp2_code + "locusID" + '\t' + sp2_code + "TDid" +'\n')
+					+ sp2_code + "_geneID" + '\t' + sp2_code + "_PG" + '\t' + sp2_code + "_locusID" + '\t' + sp2_code + "_TDid" +'\n')
 		header = 0
 		line_written = 1
 	else:

@@ -30,7 +30,7 @@ except IndexError :
 	sys.exit(0)
 
 empty_nonMatch = False
-if len(sys.argv) >= 6:
+if len(sys.argv) > 6:
 	if sys.argv[6] == 'e':
 		empty_nonMatch = True
 	
