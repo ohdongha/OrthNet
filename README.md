@@ -63,11 +63,6 @@ For each genome, coordinates of representative gene models are parsed from genom
 	```
 	gffread input.gff -T -o output.gtf
 	```
-	If converting multiple files:
-
-	```
-	for file in *.gff; do gffread $file -T -o ${file%%.gff}.gtf; done
-	```
 2. Parse the _.gtf_ file into a _.gtfParsed.txt_ file.  Name the output file as "GenomeID.gtfParsed.txt".  Repeat for all *GenomeIDs*:
 
 	```
