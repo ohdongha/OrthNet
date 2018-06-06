@@ -25,9 +25,9 @@ Jump to:
 ---
 ## Before starting
 ### Prerequisites - programs
-- pyhton 2.x - all scripts were written in python 2.7, in linux.
+- python 2.7
 - mcl (https://github.com/JohannesBuchner/mcl) - other clustering options will be added in future updates.
-- MMseqs2 (https://github.com/soedinglab/mmseqs2) - to generate input #2, #3, and annotation (see below for alternatives)	
+- MMseqs2 (https://github.com/soedinglab/mmseqs2) - to generate input #2 and #3 (see below for alternatives)	
 - I assume users are familiar with basic linux commands.
 - Optional
 	* gffread (https://github.com/gpertea/gffread) - if you start with a .gff file to generate input #1
@@ -36,7 +36,7 @@ Jump to:
 	* Cytoscape (http://cytoscape.org/) - to visualize and print OrthNets
 
 ### Prerequisites -genome data
-- genome annotation of "representative" gene models (_.gff_, .gff3, or .gtf)
+- genome annotation of "representative" gene models (.gff, .gff3, or .gtf)
 - representative gene model sequences for all loci (.fasta)
 
 ### Installing
@@ -49,15 +49,15 @@ chmod 755 <folder>/*.py
 
 ---
 ## Preparing input files
-CLfinder-OrthNet accept three inputs  1. gene model coordinates (genome annotation), 2. within-species paralog groups, and 3. between species "best-hit" pairs for all pair of genomes
+CLfinder-OrthNet accept three inputs: 1. gene model coordinates (genome annotation), 2. within-species paralog groups, and 3. between species "best-hit" pairs for all pair of genomes
 ### ProjectID and list of genomes
-*ProjectID.list* includes all *GenomeIDs* that you want to compare, one per line.  I recommend *GenomeIDs* to be simple (2~5 alphanumeric) and *ProjectID* to be unique by adding date or time-stamp. For example, below, *180101_crucifers* will be the *ProjectID* to compare six crucifer genomes included in the original article (https://doi.org/10.1101/236299):
+*ProjectID.list* includes all *GenomeIDs* that you want to compare, one per line.  I recommend *GenomeIDs* to be simple (2~5 alphanumeric) and *ProjectID* to be unique by adding date or time-stamp. For example, below, *180101_crucifers* will be the *ProjectID* to compare six crucifer genomes included in the first CLfinder-OrthNet article (https://doi.org/10.1101/236299):
 ```
 echo 'Aly Ath Cru Esa Sir Spa' | tr ' ' '\n' > 180101_Crucifers.list
 ```
 
 ### Input #1: gene model coordinates (genome annotation)
-For each genome, coordinates of representative gene models were parsed from genome annotations in *.gtf* format.  The parsed file will have strand, coordinates, number of exons, and length of the mRNA and CDS (ORF), one gene model per line.
+For each genome, coordinates of representative gene models are parsed from genome annotations in *.gtf* format.  The parsed file will have strand, coordinates, number of exons, and length of the mRNA and CDS (ORF), one gene model per line.
 
 1. If genome annotation is in _.gff_ or _.gff3_ format, convert it to _.gtf_:
 	```
