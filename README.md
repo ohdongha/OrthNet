@@ -153,24 +153,29 @@ A tab-delimited text file with the GeneID of the query gene and its 'best-hit' o
 	```
 	This will generate input #3 for *GenomeID1* and *GenomeID2* as *BestHits\__GenomeID1\_vs\_GenomeID2.list* for all genome pairs in the folder _./BHPairs.bln_ (the scripts work for any folder name; .bln stands for blastn).  As long as the file names and formats are correct, input #3 can be created by other methods to detect similar sequences, such as blastp.
 	
-	**Alternative method** Users can use peptide sequences to generate input #3 using MMseqs2.  First create and index DB for all genomes listed in _ProjectID.list_ (if **method #1** was used for input #2, this step must have been already done):
-	```
-	mkdir tmp_mms # temporary folder for MMseqs2 runs
-	while read g; do 
-	mmseqs createdb ${g}.pep.rep ${g}_DB
-	mmseqs createindex ${g}_DB tmp_mms
-	done < ProjectID.list
-	```
-	And create MMseqs2 commands for all pairwise genomes using `create_pairwiseBLAST_commands.py -M`:  
-	```
-	create_pairwiseBLAST_commands.py ProjectID -M -n "--max-seqs 10" > ProjectID_pairwiseMMseqs2.bash
-	```
-	After running the MMseqs2 command (_ProjectID_pairwiseMMseqs2.sh_), the results can be converted to input #3 in the same way as above:
-	```
-	for f in out__*.mmseqs2.txt; do f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.mmseqs2.txt}.list; done
-	mkdir ./BHPairs.mms; mv BestHits__*.list ./BHPairs.mms
-	```
-	(Note that when MMseqs2 was used for input #2, _BHPairs.bln_ in the all following steps below should be replaced with _BHPairs.mms_)
+**Alternative method** Users can use peptide sequences to generate input #3 using MMseqs2.  First create and index DB for all genomes listed in _ProjectID.list_ (if **method #1** was used for input #2, this step must have been already done):
+
+```
+mkdir tmp_mms # temporary folder for MMseqs2 runs
+while read g; do 
+mmseqs createdb ${g}.pep.rep ${g}_DB
+mmseqs createindex ${g}_DB tmp_mms
+done < ProjectID.list
+```
+
+And create MMseqs2 commands for all pairwise genomes using `create_pairwiseBLAST_commands.py -M`:
+
+```
+create_pairwiseBLAST_commands.py ProjectID -M -n "--max-seqs 10" > ProjectID_pairwiseMMseqs2.bash
+```
+
+After running the MMseqs2 command (_ProjectID_pairwiseMMseqs2.sh_), the results can be converted to input #3 in the same way as above:
+
+```
+for f in out__*.mmseqs2.txt; do f2=${f##*out__}; cut -f1,2 $f | uniq > BestHits__${f2%%.mmseqs2.txt}.list; done
+mkdir ./BHPairs.mms; mv BestHits__*.list ./BHPairs.mms
+```
+(Note that when MMseqs2 was used for input #2, _BHPairs.bln_ in the all following steps below should be replaced with _BHPairs.mms_)
 	
 ---
 ## Running CLfinder
