@@ -214,11 +214,12 @@ The OrthNet module accept a tab-delimited text file with two genes, i.e., best-h
 
 1. Create initial hard clusters:
 	```
+	cp ProjectID_out.1/ProjectID.4OrthNet.input ./
 	create_OrthNet.py ProjectID -sd -o ./
 	```
 	This step connect all best-hit pairs or tandem duplicated paralogs to create initial clusters.
 
-	With _-d_ option, tandem duplicated paralogs will be included in OrthNets.  Note that the script expects _GenomeID.gtfParsed.TD.txt_ files in the ./ folder when run with _-d_ option. With _-s_ option, it also identifies clusters that need to be further separated into sub-clusters. See `create_CLfm_summary.py -h` for details on options and parameters.
+	With _-d_ option, tandem duplicated paralogs will be included in OrthNets.  Note that the script expects _GenomeID.gtfParsed.TD.txt_ files in the ./ folder when run with _-d_ option. With _-s_ option, it also identifies clusters that need to be further separated into sub-clusters. See `create_OrthNet.py -h` for details on options and parameters.
 
 2. Markov clustering (mcl) of hard clusters:
 	```
