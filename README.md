@@ -1,22 +1,28 @@
 # CLfinder-OrthNet
 ## Synopsis
-A pipeline to detect co-linearity in gene orders among multiple closely-related genomes (CLfinder) and build networks (OrthNets) connecting orthologs with co-linearity information (co-linear, transposed, or unable to determine) among them as edge properties.
+A pipeline to detect co-linearity in gene orders among multiple closely-related genomes (CLfinder) and build networks of orthologs, or OrthNets, connecting ortholog nodes with co-linearity information (co-linear, transposed, or unable to determine) among them as edge properties (ONfinder).
 - Ideally and in most cases, each OrthNet consists of orthologs derived from a single ancestral locus, including those duplicated specifically in a subset of genomes.
 - In addition to visualize the evolutionary context/history of each ortholog group, users can search ortholog groups (as OrthNets) based on an evolutionary history pattern/context they represent.
 - For example, users can retrieve all OrthNets (i.e. ortholog groups) that have underwent:
 	* tandem duplication events unique to a genome or a subset of genomes, either mono-, para-, or polyphyletic
 	* orthologs deleted, duplicated, or transposed uniquely in a genome or a subset of genomes,
 	* orthologs transposed and duplicated uniquely in a genome or a subset of genomes, etc.
-- CLfinder and OrthNet are separable modules.  Users can use only the CLfinder module to quickly obtain co-linearity information and a summary matrix of the pairwise comparisons for multiple genomes.  The OrthNet module is optimized for working with CLfinder, but also can accept co-linearity information from other programs.
+- CLfinder and ONfinder (OrthNet finder) are two separable modules.  Users can use only the CLfinder module to quickly obtain co-linearity information and a summary matrix of the pairwise comparisons for multiple genomes.  The ONfinder module is optimized for creating OrthNets using inputs from CLfinder, but also can accept co-linearity information from other programs.
 
 ## News
+- 2018-10-31 The first CLfinder-OrthNet paper is now [online](https://academic.oup.com/dnaresearch/advance-article/doi/10.1093/dnares/dsy035/5151297). 
 - 2018-06-05 Added options to use MMseqs2 (https://github.com/soedinglab/mmseqs2) to generate inputs #2 and #3.  MMseqs2 is much faster than orthoMCL or BLASTP and also generate one HSP (High-scoring Segment Pair) per each sequence comparison. 
+
+## Upcoming changes
+- cluster_OrthNet_topology_exact.py (previously search_OrthNet_topology.py) and other tools to analyze complex OrthNets
+- Wrapper script for the CLfinder and ONfinder modules
+- Iterative MCL
 
 Jump to:
  [**Before starting**](https://github.com/ohdongha/CL_finder#before-starting);
  [**Preparing input files**](https://github.com/ohdongha/CL_finder#preparing-input-files);
  [**Running CLfinder**](https://github.com/ohdongha/CL_finder#running-clfinder);
- [**Running OrthNet**](https://github.com/ohdongha/CL_finder#running-orthnet);
+ [**Running ONfinder**](https://github.com/ohdongha/CL_finder#running-orthnet);
  [**Searching OrthNets**](https://github.com/ohdongha/CL_finder#searching-orthnets);
  [**Annotating OrthNets**](https://github.com/ohdongha/CL_finder#annotating-orthnets-optional);
  [**Notes**](https://github.com/ohdongha/CL_finder#notes);
@@ -209,8 +215,8 @@ Now CLfinder module is ready to run:
 	```
 	This script looks into a CLfinder output folder and create a summary matrix for all query-target genome pairs, reporting number of co-linear (_cl_), lineage-specific (_ls_), transposed (_tr_), and not determined (_nd_) due to too fragmented genome scaffold assembly.  See `create_CLfm_summary.py -h` for details.
 ---
-## Running OrthNet
-The OrthNet module accept a tab-delimited text file with two genes, i.e., best-hit pairs from different genomes or tandem duplicated paralogs from the same genome, and their co-linearity relationship. The CLfinder model generate such a file (_ProjectID.4OrthNet.input_), as described above.  As long as formatted correctly, the OrthNet modeule can accept co-linearity information from other pipeline or sources.  See `create_OrthNet.py -h` for the required input file format.
+## Running ONfinder
+The ONfinder (OrthNet finder) module accept a tab-delimited text file with two genes, i.e., best-hit pairs from different genomes or tandem duplicated paralogs from the same genome, and their co-linearity relationship. CLfinder generates such a file (_ProjectID.4OrthNet.input_), as described above.  As long as formatted correctly, the ONfinder modeule can accept co-linearity information from other pipeline or sources.  See `create_OrthNet.py -h` for the required input file format.
 
 1. Create initial hard clusters:
 	```
