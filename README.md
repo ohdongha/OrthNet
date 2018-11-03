@@ -22,7 +22,7 @@ Jump to:
  [**Before starting**](https://github.com/ohdongha/CL_finder#before-starting);
  [**Preparing input files**](https://github.com/ohdongha/CL_finder#preparing-input-files);
  [**Running CLfinder**](https://github.com/ohdongha/CL_finder#running-clfinder);
- [**Running ONfinder**](https://github.com/ohdongha/CL_finder#running-orthnet);
+ [**Running ONfinder**](https://github.com/ohdongha/CL_finder#running-onfinder);
  [**Searching OrthNets**](https://github.com/ohdongha/CL_finder#searching-orthnets);
  [**Annotating OrthNets**](https://github.com/ohdongha/CL_finder#annotating-orthnets-optional);
  [**Notes**](https://github.com/ohdongha/CL_finder#notes);
@@ -312,7 +312,7 @@ Separately, this step generate a summary including the following information for
  
 3. Generate a summary of OrthNet node copy numbers and annotation:
 
-	The ```update_OrthNet_after_mcl.py``` script (see [Running OrthNet](https://github.com/ohdongha/CL_finder#running-orthnet) item #3) generates an <i>.mclOutput</i> output file, which can be used for creating an annotated summary of OrthNets. See ```parse_mclOutput.py -h``` for more details.
+	The ```update_OrthNet_after_mcl.py``` script (see [Running ONfinder](https://github.com/ohdongha/CL_finder#running-onfinder) item #3) generates an <i>.mclOutput</i> output file, which can be used for creating an annotated summary of OrthNets. See ```parse_mclOutput.py -h``` for more details.
 	```
 	parse_mclOutput.py -Hsrx -a Annotation_consolidated.short.txt -p _internal_ ./ProjectID_out.2/ProjectID.clstrd.afterMCL.nodes.mclOutput ON
 	```
