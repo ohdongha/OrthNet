@@ -19,9 +19,12 @@ synopsis2 = "detailed description:\n\
     renamed and written to <output_gtf>\n\
  - '-e'|'--extract': extract only those transcripts included in <2bRelaced.list>\n\
     default behavior is to keep them without renaming.\n\
-by ohdongha@gmail.com 20171017 ver 0.2\n\n"
+ - '-x'|'--exclude': extract only those transcripts NOT included in\n\
+     <2bRelaced.list>; does not perform renaming.\n\
+by ohdongha@gmail.com 20170624 ver 0.3\n\n"
 
 #version_history
+#20180624 ver 0.3 # added an option to exclude transcripts in the list
 #20171017 ver 0.2 # added an option to extract transcripts in the list only
 #20160328 ver 0.1 # if new transcript ID is not given, old transcript ID will be retained.
 #20151129 ver 0.0 
@@ -62,6 +65,7 @@ parser.add_argument('output_gtf', type=argparse.FileType('w'))
 
 # options
 parser.add_argument('-e', '--extract', action="store_true", default=False)
+parser.add_argument('-x', '--exclude', action="store_true", default=False)
 
 args = parser.parse_args()
 
@@ -98,21 +102,34 @@ print "reading %s as the <input_gtf>:" % args.input_gtf.name
 for line in args.input_gtf:
 	num_line += 1
 	tok = line.replace('\"','').split('\t')
-	try:
-		ninthColumn_records = tok[8].split(';')
-		ninthColumn_transcriptID = "NA"
-		for record in ninthColumn_records:
-			if record.strip().split(' ')[0] == 'transcript_id':
-				ninthColumn_transcriptID = record.strip().split(' ')[1]
-		if ninthColumn_transcriptID in transcriptID_dict:
-			tok[8] = 'transcript_id "' + transcriptID_dict[ninthColumn_transcriptID] + '";\n'
-			args.output_gtf.write('\t'.join(tok))
-			num_line_renamed += 1
-		elif args.extract == False:
-			args.output_gtf.write(line)
-			num_line_kept += 1
-	except (ValueError, IndexError) :
-		print line.strip() + "\t:invalid_line_%d" % num_line
+	if not args.exclude:
+		try:
+			ninthColumn_records = tok[8].split(';')
+			ninthColumn_transcriptID = "NA"
+			for record in ninthColumn_records:
+				if record.strip().split(' ')[0] == 'transcript_id':
+					ninthColumn_transcriptID = record.strip().split(' ')[1]
+			if ninthColumn_transcriptID in transcriptID_dict:
+				tok[8] = 'transcript_id "' + transcriptID_dict[ninthColumn_transcriptID] + '";\n'
+				args.output_gtf.write('\t'.join(tok))
+				num_line_renamed += 1
+			elif args.extract == False:
+				args.output_gtf.write(line)
+				num_line_kept += 1
+		except (ValueError, IndexError) :
+			print line.strip() + "\t:invalid_line_%d" % num_line
+	else:
+		try:
+			ninthColumn_records = tok[8].split(';')
+			ninthColumn_transcriptID = "NA"
+			for record in ninthColumn_records:
+				if record.strip().split(' ')[0] == 'transcript_id':
+					ninthColumn_transcriptID = record.strip().split(' ')[1]
+			if ninthColumn_transcriptID not in transcriptID_dict:
+				args.output_gtf.write(line)
+				num_line_kept += 1
+		except (ValueError, IndexError) :
+			print line.strip() + "\t:invalid_line_%d" % num_line
 
 print "out of %d lines, %d renamed/extracted, %d untouched/kept." % (num_line, num_line_renamed, num_line_kept)
 print "done\n"

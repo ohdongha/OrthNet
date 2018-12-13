@@ -31,10 +31,11 @@ synopsis2 = "detailed description:\n\
      details,\n\
   - Use '-m 0' to print out values for all nodes.  In this case, the default\n\
      <output> is '<ProjectID>.OrthNet.all'\n\
- by ohdongha@gmail.com ver0.1 20180423\n"
+ by ohdongha@gmail.com ver0.0.2 20180726\n"
  
 #version_history
-#20180423 ver 0.1 minor fix for backward compatibility (look for "CDS_len" columns if "CDS_l" doesn't exist
+#20180726 ver 0.0.2 another minor fix; OrthNetID "na" is not counted as a valid OrthNetID
+#20180423 ver 0.0.1 minor fix for backward compatibility (look for "CDS_len" columns if "CDS_l" doesn't exist
 #20180329 ver 0.0
 
 parser = argparse.ArgumentParser(description = synopsis1, epilog = synopsis2, formatter_class = RawTextHelpFormatter)
@@ -107,7 +108,7 @@ if args.mclOutput:
 	geneID_OrthNet_dict = dict() # key = OrthNetID, value = a list of geneIDs with cORFs in the OrthNet
 
 for line in fin:
-	tok = line.strip().split('\t')
+	tok = line.split('\t')
 	# parsing the input file header
 	if header:
 		colIndex_spcs = tok.index("spcs")
@@ -133,7 +134,7 @@ for line in fin:
 		except IndexError:
 			print "missing columns in: %s" % line.strip()
 		
-		if OrthNetID != "":
+		if OrthNetID != "" and OrthNetID != "na":
 			if args.mclOutput:
 				geneID = spcsID + '|' + tok[ colIndex_gene ].strip()
 			

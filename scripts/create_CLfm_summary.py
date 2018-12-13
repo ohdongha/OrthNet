@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-
-import os, sys, subprocess
+import os, sys, subprocess, datetime
 import argparse
 from argparse import RawTextHelpFormatter
 
@@ -20,16 +19,13 @@ synopsis2 = "detailed description:\n\
      created by a 'CL_finder_multi.py -r' run; defaults = './'\n\
  2. Output and options\n\
   - for all query-target genome pairs, print the numbers of cl, ls, nd, tr\n\
-     best-hit pairs in a tabulated format, and print to <output>.\n\
-     'spcsID1.CL_compared2spcsID2spcsID3...spcsIDn.20.4.20.txt'.\n\
+     best-hit pairs in a tabulated format and print to <Output>.\n\
   - '-e'|'--cl_end': report 'cl_end' best-hit pairs separately from 'cl' pairs\n\
      ;default=False,\n\
- 3. Misc\n\
-  - creates a temporary './<Project>.<Path2CLfm_output_abbr>.rep1Combined.txt'\n\
-     file where <Path2CLfm_output_abbr>=${Path2CLfm_output%%*/} - '/' (if any),\n\
- by ohdongha@gmail.com ver0.0 20180101\n"
+ by ohdongha@gmail.com ver0.0.1 20181204\n"
  
 #version_history
+#20181204 ver 0.0.1 remove temporary file after running
 #20180101 ver 0.0
 
 parser = argparse.ArgumentParser(description = synopsis1, epilog = synopsis2, formatter_class = RawTextHelpFormatter)
@@ -50,7 +46,7 @@ args = parser.parse_args()
 path_CLfm_output = args.Path2CLfm_output
 if path_CLfm_output[-1] != "/": path_CLfm_output = path_CLfm_output + "/"
 
-tempFile_name = args.Project + '.' + path_CLfm_output.split('/')[-2] + '.rep1Combined.txt'
+tempFile_name = path_CLfm_output.split('/')[-2] + '_' + datetime.datetime.now().strftime("%y%m%d_%H%M%S") + '.rep1Combined.temp'
 
 
 ################################
@@ -150,4 +146,11 @@ for query_spcsID in spcsID_list:
 		args.Output.write(row_to_print + '\n')
 
 args.Output.close()	
+
+## clean the .temp file
+try:
+    os.remove(tempFile_name)
+except OSError:
+    pass
+	
 print "\ndone\n"

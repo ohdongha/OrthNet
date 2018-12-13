@@ -28,9 +28,10 @@ synopsis2 = "detailed description:\n\
   - '-O'|'--ORFsize': add three more columns, median and stdev of ortholog CDS length\n\
      (mdCDS_l and sdCDS_l) and proportion of CDS_l compared to the median (%mdCDS_l),\n\
 	 for each query gene; all geneIDs should be unique; default=False\n\
- by ohdongha@gmail.com ver0.1.1 20180516\n"
+ by ohdongha@gmail.com ver0.1.2 20180726\n"
  
 #version_history
+#20180726 ver 0.1.2 for the improved compatibility with the "compare_OrthNet_ORFsize.py" script, add "0" instead of empty columns for lineage-specific genes, when -O option is used,  
 #20180516 ver 0.1.1 print a warning, instead of KeyError, when a geneID not in TDfiles appears in CLfinder results for some reason, 
 #20180307 ver 0.1 '-O' option added to compare ORF sizes among BestHits,
 #20180306 ver 0.0
@@ -204,7 +205,7 @@ if args.ORFsize:
 						int( math.ceil(numpy.std(ortholog_CDSlen_list)) ), \
 						int( math.ceil( query_CDSlen / numpy.median(ortholog_CDSlen_list) * 100.0 ) ) ) )
 			else:
-				fout2.write(line.strip() + "\t\t\t\n")
+				fout2.write(line.strip() + "\t0\t0\t0\n")
 	fin2.close()
 	fout2.close()
 	

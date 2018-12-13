@@ -47,9 +47,10 @@ synopsis2 = "detailed description:\n\
      (PC == Parsed and Concatanated); output filename can be modified with '-O'\n\
   - '-c'|'--clean_temp': remove all temp files.\n\
   - '-O output_ext': output file extension; default = "".txt""\n\n\
- by ohdongha@gmail.com ver0.2.1 20180516\n"
+ by ohdongha@gmail.com ver0.2.2 20181023\n"
 
 #version_history
+#20181023 ver 0.2.2 # slight modification to make it working with parse_mclOutput.py ver1.0.5+ 
 #20180516 ver 0.2.1 # accept path to input files as '-i'; added '-O' option for output file extension 
 #20160918 ver 0.2 # accept weights as an input file with '-w' option
 #20160829 ver 0.1 # added option to accept weights for TD edges 
@@ -207,7 +208,8 @@ for clstrID in clstrs_4mcl_list:
 	for line in open(fileName_mclOutput):
 		num_lines = num_lines + 1
 	if num_lines > 1:
-		subprocess.call("parse_mclOutput.py " + fileName_mclOutput + " " + clstrID, shell=True)
+#		subprocess.call("parse_mclOutput.py " + fileName_mclOutput + " " + clstrID, shell=True)
+		subprocess.call("parse_mclOutput.py " + fileName_mclOutput + " " + clstrID + " -o " + fileName_mclOutput, shell=True) # ver 0.2.2
 		if beginning:
 			subprocess.call("cat " + fileName_mclOutput_parsed + " > " + fileName_mclOutput_parsed_combined, shell=True)
 			beginning = False
