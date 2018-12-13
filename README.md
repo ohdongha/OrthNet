@@ -9,6 +9,16 @@ A pipeline to detect co-linearity in gene orders among multiple closely-related 
 	* orthologs transposed and duplicated uniquely in a genome or a subset of genomes, etc.
 - CLfinder and ONfinder (OrthNet finder) are two separable modules.  Users can use only the CLfinder module to quickly obtain co-linearity information and a summary matrix of the pairwise comparisons for multiple genomes.  The ONfinder module is optimized for creating OrthNets using inputs from CLfinder, but also can accept co-linearity information from other programs.
 
+**Jump to:**
+ [**Before starting**](https://github.com/ohdongha/CL_finder#before-starting);
+ [**Preparing input files**](https://github.com/ohdongha/CL_finder#preparing-input-files);
+ [**Running CLfinder**](https://github.com/ohdongha/CL_finder#running-clfinder);
+ [**Running ONfinder**](https://github.com/ohdongha/CL_finder#running-onfinder);
+ [**Searching OrthNets**](https://github.com/ohdongha/CL_finder#searching-orthnets);
+ [**Annotating OrthNets**](https://github.com/ohdongha/CL_finder#annotating-orthnets-optional);
+ [**Notes**](https://github.com/ohdongha/CL_finder#notes);
+ []([**Tutorial**](https://github.com/ohdongha/CL_finder#tutorial))
+
 ## News
 - 2018-12-13 CLfinder-OrthNet will be presented at *Plant&Animal Genomes 2019* (Jan. 12-16, 2019 at San Diego, CA) in the following three workshops: Systems Genomics, N. G. Genome Annotation & Analysis, and Digital Tools & Resources ([details and abstracts](https://plan.core-apps.com/pag_2019/speaker/6e070c0ebde6a5b908f9f08fb2f126ac))
 - 2018-10-31 The first CLfinder-OrthNet paper is published in *DNA Research* and now [online](https://academic.oup.com/dnaresearch/advance-article/doi/10.1093/dnares/dsy035/5151297). 
@@ -23,16 +33,6 @@ A pipeline to detect co-linearity in gene orders among multiple closely-related 
 - Tutorial and test dataset based on MMSeqs2
 - Iterative MCL (testing)
 - R-OrthNet : OrthNet with edges representing presence or absence of conservations in regulatory features between nodes
-
-Jump to:
- [**Before starting**](https://github.com/ohdongha/CL_finder#before-starting);
- [**Preparing input files**](https://github.com/ohdongha/CL_finder#preparing-input-files);
- [**Running CLfinder**](https://github.com/ohdongha/CL_finder#running-clfinder);
- [**Running ONfinder**](https://github.com/ohdongha/CL_finder#running-onfinder);
- [**Searching OrthNets**](https://github.com/ohdongha/CL_finder#searching-orthnets);
- [**Annotating OrthNets**](https://github.com/ohdongha/CL_finder#annotating-orthnets-optional);
- [**Notes**](https://github.com/ohdongha/CL_finder#notes);
- [**Tutorial**](https://github.com/ohdongha/CL_finder#tutorial)
 
 ---
 ## Before starting
