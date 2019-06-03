@@ -249,11 +249,11 @@ The ONfinder (OrthNet finder) module accept a tab-delimited text file with two g
 	```
 	Since this process may create a large number of temporary files, I suggest to create a separate working folder (_./mcl_).  The _weights4mcl.list_ includes edge weights users can assign to each type of edges. Users can also select the inflation rate for mcl with _-I_ option. See `mcl_OrthNet.py -h` for details.
 
-	The output filename includes edge weight information.  If default values were used, the output file will be *ProjectID_TD1.5_rC1.2_rNC0.5_uC0.6_uNC0.25_I2.0_mclOut.PC.txt*.
+	The output filename includes edge weight information.  If default values were used, the output file will be *ProjectID_TD1.5_rC1.2_rNC0.5_uC0.6_uNC0.25_I1.2_mclOut.PC.txt*.
 
 3. Update best-hit pairs and OrthNets after mcl:
 	```
-	update_OrthNet_after_mcl.py ProjectID mcl/ProjectID_TD1.5_rC1.2_rNC1.0_uC0.3_uNC0.25_I1.2_mclOut.PC.txt -b BHPairs.1 -o1 BHPairs.2 -o2 ProjectID_out.2 -u
+	update_OrthNet_after_mcl.py ProjectID mcl/ProjectID_TD1.5_rC1.2_rNC0.5_uC0.6_uNC0.25_I1.2_mclOut.PC.txt -b BHPairs.1 -o1 BHPairs.2 -o2 ProjectID_out.2 -u
 	format_OrthNetEdges_4SIF.py ./ProjectID_out.2/ProjectID.clstrd.afterMCL.edges
 	```
 	This process again searches for alternative best-hit pairs to maximize pairing within each OrthNet after the _mcl_ clustering. Then, reformat the _.edges_ file to a _.sif_ file to finalize OrthNets:
