@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-
-import re, sys, os
-import argparse
+import re, sys, os, argparse
 from argparse import RawTextHelpFormatter
 
 ###################################################
@@ -42,9 +40,11 @@ synopsis2 = "detailed description:\n\
   - if genes in <4OrthNet_input> and 'BestHitPairs' are in the form of\n\
      '<spcsID>|<geneID>', only the <geneID> portion is used.\n\
   - assumes no header in 'BestHitPairs' files.\n\n\
- by ohdongha@gmail.com 20171225 ver 0.1.3\n"
+ by ohdongha@gmail.com 20190129 ver 0.1.5\n"
  
 #version_history
+#20190129 ver 0.1.5 # a bug fix (now all variables initialized at the beginning of each BHPairs file) 
+#20180508 ver 0.1.4 # BHP file format changed slightly from 'BestHits__%s__vs__%s.list' to 'BestHits__%s_vs_%s.list' ... for some reason 
 #20171225 ver 0.1.3 # if <Project> argument ends with '.list', just ignore it
 #20170316 ver 0.1.2 # 'translocated (tlc)' is now called 'transposed (tr)' 
 #20160815 ver 0.1.1 # modified to work with 'update_OrthNet_after_mcl.py'.
@@ -72,8 +72,8 @@ except OSError:
 	if not os.path.isdir(path_BestHitPairs_fixed): raise
 
 ## defining expected format of input and output file names.  modify as needed: 
-input_BestHitPairs_filename_format = path_BestHitPairs + "BestHits__%s__vs__%s.list" 
-output_BestHitPairs_filename_format = path_BestHitPairs_fixed + "BestHits__%s__vs__%s.list" 
+input_BestHitPairs_filename_format = path_BestHitPairs + "BestHits__%s_vs_%s.list" 
+output_BestHitPairs_filename_format = path_BestHitPairs_fixed + "BestHits__%s_vs_%s.list" 
 
 
 ########################################
@@ -94,6 +94,11 @@ for line in fin_SpcsList:
 fin_SpcsList.close()
 print "Total %d species IDs detected." % (len(spcsID_list))
 
+## v0.1.4: this is to accept both old and new BHP file name formats ... why I am bothering with this ...
+if not os.path.isfile(input_BestHitPairs_filename_format % (spcsID_list[0], spcsID_list[1])):
+	if os.path.isfile(path_BestHitPairs + "BestHits__%s__vs__%s.list" % (spcsID_list[0], spcsID_list[1])):
+		input_BestHitPairs_filename_format = path_BestHitPairs + "BestHits__%s__vs__%s.list" 
+
 
 ########################################
 ### 2. reading the OrthNetInput file ###
@@ -106,7 +111,7 @@ CL_type = ""
 # create bestHit_CLtype_dict; bestHit_CLtype_dict[queryID_gene___subjectID_gene] = CL_type
 bestHit_CLtype_dict = dict()
 
-print "\n\nreading %s:" % args.forOrthNetInput.name
+print "\nreading %s:" % args.forOrthNetInput.name
 
 for line in args.forOrthNetInput:
 	tok = line.split('\t')
@@ -123,22 +128,11 @@ args.forOrthNetInput.close()
 query_spcsID = ""
 subject_spcsID = ""
 
-queryID_gene = ""
-queryID_gene_prev = ""
-subjectID_gene = ""
-subjectID_gene_prev = ""
-subjectID_gene_marked = ""
-BestHit_rank = 0
-
-BestHitPair_processed = False
-BestHitPair_written = False
-FirstEntry = True
-
 for i in range( len(spcsID_list) ):
 	query_spcsID = spcsID_list[i]
 	subject_spcsID = ""
 	
-	print "\n\nprocessing %s as query_spcsID, comparing with all other species:" % query_spcsID
+	print "\nprocessing %s as query_spcsID, comparing with all other species:" % query_spcsID
 
 	for j in range( len(spcsID_list) ):
 		if spcsID_list[j] != query_spcsID:
@@ -148,6 +142,18 @@ for i in range( len(spcsID_list) ):
 			fin_BestHitPairs = open(input_BestHitPairs_filename_format % (query_spcsID, subject_spcsID), "rU")
 			fout_BestHitPairs = open(output_BestHitPairs_filename_format % (query_spcsID, subject_spcsID), "w")
 			print "updating %s and writing to %s," % (fin_BestHitPairs.name, fout_BestHitPairs.name)
+			
+			# initializing variables # v 0.1.5
+			queryID_gene = ""
+			queryID_gene_prev = ""
+			subjectID_gene = ""
+			subjectID_gene_prev = ""
+			subjectID_gene_marked = ""
+			BestHit_rank = 0
+			
+			BestHitPair_processed = False
+			BestHitPair_written = False
+			FirstEntry = True
 			
 			for line in fin_BestHitPairs:
 				tok = line.split('\t')
