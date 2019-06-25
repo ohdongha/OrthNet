@@ -23,7 +23,7 @@ synopsis2 = "\
     query and DB; ignored if '-M' is on; default='.cds.rep.fa'\n\
 2. Output:\n\
  - print command lines for blastn (default) with tabular format to STDOUT,\n\
- - blast outputs are formatted as 'out__<spcsID1>_vs_<spcsID2>.[bln,blp].txt'\n\
+ - blast outputs are formatted as 'out__<spcsID1>_vs_<spcsID2>.txt'\n\
 3. Misc:\n\
  - assume blast DBs (or mmseqs DBs and indexes) are already created;\n\
  - suggested option for blastn: -n \"-task blastn -num_threads 16 -evalue 1e-5\n\
@@ -32,10 +32,11 @@ synopsis2 = "\
  - with '-M' option, assume there is a folder '.\tmp' for temporary files;\n\
  - with '-M' option, print also 'mmseqs convertalis' commands in the format of:\n\
     mmseqs convertalis <spcsID1>_DB <spcsID2>_DB out__<spcsID1>_vs_<spcsID2> \\\n\
-    out__<spcs1>_vs_<spcs2>.mmseqs2.txt --format-mode 2\n\n\
-by ohdongha@gmail.com ver0.1 20180507\n"
+    out__<spcs1>_vs_<spcs2>.txt --format-mode 2\n\n\
+by ohdongha@gmail.com ver0.1.1 20190625\n"
 
 #version_history
+#20190625 ver 0.1.1 # regardless of the program used, output files will be named as out__<spcs1>_vs_<spcs2>.txt
 #20180507 ver 0.1 # added option to print mmseqs2 commands, insead of blastn
 #20171224 ver 0.0
 
@@ -65,13 +66,17 @@ args = parser.parse_args()
 cmd_fmt_blastn = "blastn -query %s -db %s -out %s "
 cmd_fmt_blastp = "blastp -query %s -db %s -out %s "
 input_fmt = "%s" + args.InputFormat
-out_fmt_blastn = "out__%s_vs_%s.bln.txt"
-out_fmt_blastp = "out__%s_vs_%s.blp.txt"
+out_fmt_blastn = "out__%s_vs_%s.txt"
+out_fmt_blastp = "out__%s_vs_%s.txt"
+#out_fmt_blastn = "out__%s_vs_%s.bln.txt"
+#out_fmt_blastp = "out__%s_vs_%s.blp.txt"
 
 cmd_fmt_mmseqs_search = "mmseqs search %s %s %s ./tmp "
 cmd_fmt_mmseqs_convertalis = "mmseqs convertalis %s %s %s %s --format-mode 2 "
 out_fmt_mmseqs_search = "out__%s_vs_%s "
-out_fmt_mmseqs_convertalis = "out__%s_vs_%s.mmseqs2.txt "
+out_fmt_mmseqs_convertalis = "out__%s_vs_%s.txt "
+#out_fmt_mmseqs_convertalis = "out__%s_vs_%s.mmseqs2.txt "
+
 
 # defining PATHs
 path_query = args.Path2Query
