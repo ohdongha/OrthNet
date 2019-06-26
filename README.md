@@ -24,7 +24,7 @@ A pipeline to detect co-linearity in gene orders among multiple closely-related 
 - 2018-10-31 The first CLfinder-OrthNet paper is published in *DNA Research* and now [online](https://academic.oup.com/dnaresearch/advance-article/doi/10.1093/dnares/dsy035/5151297). 
 
 ## Updates
-- 2019-06-25 Minor fixes on inconsistencies of BHPairs file name formats, etc. 
+- 2019-06-25 Minor fixes on temporary file name formats; added more options to `parse_gtf_2table.py` to help the preparation of input#1. 
 - 2018-12-25 Added `cluster_OrthNet_topology_exact.py` (previously `search_OrthNet_topology.py`) and `search_OrthNet_CNVs.py`; minor bug fixes and improvements
 - 2018-06-05 Added options to use [MMseqs2](https://github.com/soedinglab/mmseqs2) to generate inputs #2 and #3.  MMseqs2 is much faster than orthoMCL or BLASTP and also generate one HSP (High-scoring Segment Pair) per each sequence comparison. 
 
@@ -81,8 +81,6 @@ For each genome, coordinates of representative gene models are parsed from genom
 	```
 	parse_gtf_2table.py -pr input.gtf GenomeID.gtfParsed.txt > GenomeID.gtfParsed.log
 	``` 
-	-p option to use protein-coding genes only and -r option to report overlaps among gene coordinates.
-
 	#### Important! Genomes should contain one representative gene/transcript model per each locus. See [Note 1](https://github.com/ohdongha/CL_finder#1-obtaining-one-representative-gene-model-per-locus)
 
 
@@ -346,10 +344,11 @@ Separately, this step generate a summary including the following information for
 ---
 ## Notes
 ### 1. Obtaining one representative gene model per locus
-- To detect co-linearity correctly, CLfinder needs genome coordinates of one gene model per each locus. If possible, select the gene model annotatoin file that inculdes "primary transcript" or "representative gene/isoform".
-- `parse_gtf_2table.py -r` reports all gene models in the *.gtf* files whose genomic coordinates are overlapping.  If number of such gene models are small (less than <1%), probably the genome annotation has only representative gene models.
-- If genome annotation include isoforms, select only the primary isoforms.  Often isoforms were named as *geneID.1*, *geneID.2*, etc., in which case you can choose only those ending with *.1* in the *.gtfParsed.txt* file.  Check `select_primary_fromGTFparsed.py -h` if you have a list of primary/representative transcript/isoform/gene model IDs and select them in the *.gtfParsed.txt* file.
-- If there is no better way to select representative gene/transcript/isoform, `parse_gtf_2table.py -c` will collapse all gene models that have overlapping or identical coordinates, keeping only the longest one.  See the script help for the detail.  One can also modify the *.gtf* file, using [gtf2gtf.py in CGAT](https://www.cgat.org/downloads/public/cgat/documentation/scripts/gtf2gtf.html), to condense isoforms in each locus (thanks Keeley Adams for finding out this tool).
+- To detect co-linearity correctly, CLfinder needs genome coordinates of one gene model per each locus. If possible, select the gene model annotatoin file that inculdes "primary transcript" or "representative gene model/isoform".
+- `parse_gtf_2table.py -pr` reports all protein-coding (-p option) gene models in the *.gtf* files whose genomic coordinates are overlapping.  If number of such gene models are small (less than <1%), probably the genome annotation has only representative gene models.
+- If genome annotation include isoforms, select only the primary isoforms.  Often isoforms are named as *geneID.1*, *geneID.2*, etc., in which case you can choose only those ending with *.1* in the *.gtfParsed.txt* file.  Once you have a list of geneIDs for primary isoform/transcripts only, `parse_gtf_2table.py -e` can extract them from a *.gtf* file to create a new *.gtf* containing only primary isoform/transcript. The new *.gtf* file can be parsed to *.gtfParsed.txt* as Input #1.  The CDS sequences can be extracted from the new *.gtf* file using `gffread -x'.
+- If there is no better way to select representative gene/transcript/isoform, `parse_gtf_2table.py -L` will cluster all gene models that have overlapping or identical coordinates, keeping only the one with the longest ORF. Plus and minus strands will be clustered separately.  If you want to cluster all genes with overlapping coordinates and select the representative for each cluster yourself, `parse_gtf_2table.py -l` will print *.gtfParsed.txt* file with the cluster ID added as the last column without selecting a representative. See the script help (`parse_gtf_2table.py -h`) for details.  
+- One can also modify the *.gtf* file, using [gtf2gtf.py in CGAT](https://www.cgat.org/downloads/public/cgat/documentation/scripts/gtf2gtf.html), to condense isoforms in each locus (thanks Keeley Adams for finding out this tool). 
 - After obtaining the _.gtfParsed.txt_ file, make sure that only gene models included in this file are used for generating Input #2 and #3.  *GeneIDs* should be consistent over all three inputs.
 
 ### 2. Filtering 'best-hit' pairs based on HSP_cov
@@ -360,4 +359,4 @@ Separately, this step generate a summary including the following information for
 
 ---
 ## Tutorials
-- coming soon (before 2019 January)
+- coming soon (before 2019 August)
