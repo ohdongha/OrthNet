@@ -17,6 +17,7 @@ A pipeline to detect co-linearity in gene orders among multiple closely-related 
  [**Searching OrthNets**](https://github.com/ohdongha/CL_finder#searching-orthnets);
  [**Annotating OrthNets**](https://github.com/ohdongha/CL_finder#annotating-orthnets-optional);
  [**Notes**](https://github.com/ohdongha/CL_finder#notes);
+ [**How to cite**](https://github.com/ohdongha/CL_finder#how-to-cite);
  []([**Tutorial**](https://github.com/ohdongha/CL_finder#tutorial))
 
 ## News
@@ -360,3 +361,6 @@ Separately, this step generate a summary including the following information for
 ---
 ## Tutorials
 - coming soon (before 2019 August)
+---
+## How to cite
+Oh & Dassanayake Landscape of gene transposition–duplication within the Brassicaceae family. DNA Res 26, 21–36 (2019). doi:10.1093/dnares/dsy035
