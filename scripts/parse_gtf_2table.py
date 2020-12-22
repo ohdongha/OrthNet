@@ -10,9 +10,6 @@ synopsis1 = "\
   parses mRNA and CDS features from a .gtf file and create a .txt summary with\n\
   one gene loci per line.  works best with protein-coding (pc) gene loci"
 synopsis2 = "detailed description:\n\
- 1. Input files and options:\n\
-  - './<Project>.list' including all species IDs (spcsIDs), one per line,\n\
-     that appear in OrthNets.\n\
  1. Parsing .gtf file:\n\
   - from <input.gtf>, find out coordinates of mRNA, CDS, number of exons for\n\
      each transcript model and print to <output.txt>, tab-delimited.\n\
@@ -27,8 +24,10 @@ synopsis2 = "detailed description:\n\
      nested in another gene locus. report collapese loci to STDOUT.\n\
   - '-m MARGIN': gene loci coordinates different by less than MARGIN nucleotides\n\
      are considered identical. assume '-c' automatically.\n\
-  - '-r'|'--report': report transcript_id overlapping with others\n\
+  - '-r'|'--report_overlap_by_mRNA': report transcript_id overlapping with others\n\
      (e.g. isoforms) to STDOUT.\n\
+  * '--report_overlap_by_CDS': report transcript_id overlapping with others\n\
+     (e.g. isoforms) to STDOUT, based on CDS/ORF (instead of mRNA/transcript)\n\
   - '-l'|'--cluster': instead of collapsing overlapping transcript models\n\
      cluster them and report numerical cluster IDs as the last column; all\n\
      transcript models who overlap and in the same direction\strain, are\n\
@@ -43,9 +42,14 @@ synopsis2 = "detailed description:\n\
   - '-e <transcriptID.list>': given a list of transcriptIDs, one per line,\n\
      print .gtf file containing only those in <transcriptID.list>; <output.txt>\n\
      is the filtered .gtf file, instead of a .gtfParsed.txt file.\n\
-by ohdongha@gmail.com 20190409 ver 0.5.2\n\n"
+by ohdongha@gmail.com 20201221 ver 0.6.2\n\n"
 
 #version_history
+#20201221 ver 0.6.2 # added '--report_overlap_by_CDS'  
+#20201129 ver 0.6.1 # when sorting on Chr, use "sort -k2,2V" instead of "sort -k2,2" per https://stackoverflow.com/a/34054179/6283377
+#20200612 ver 0.6 # let's try to make it run on python 3.8... 
+#20191225 ver 0.5.3 # -e option report transcriptID that were not found in <input.gtf> 
+#20190819 ver 0.5.2.1 # fixed the script synopsis (no change in script itself) 
 #20190409 ver 0.5.2 # -e option takes only the first field as the transcriptID from <transcriptID.list> 
 #20190220 ver 0.5.1 # added -p option to print only protein-coding gene models; added -L option to select the one with longest ORF for each cluster detected by -l option 
 #20190125 ver 0.5 # added -e option to print .gtf file containing only transcripts listed in an input
@@ -58,23 +62,21 @@ by ohdongha@gmail.com 20190409 ver 0.5.2\n\n"
 #20151210 ver 0.0 
 
 #### Example: lines in a <input.gtf> file
-##ch1-1   FGenesh++       CDS     24041   24116   4.49    +       0       transcript_id "Tp1g00060";
-##ch1-1   transdecoder    exon    24316   25212   .       -       .       transcript_id "Tp1g00070.a.x";
-##ch1-1   FGenesh++       CDS     24336   24919   36.22   +       2       transcript_id "Tp1g00060";
-##ch1-1   transdecoder    CDS     25153   25212   .       -       0       transcript_id "Tp1g00070.a.x";
-##ch1-1   transdecoder    CDS     25285   25500   .       -       0       transcript_id "Tp1g00070.a.x";
-##ch1-1   transdecoder    exon    25285   25500   .       -       .       transcript_id "Tp1g00070.a.x";
-##ch1-1   transdecoder    CDS     25584   25704   .       -       1       transcript_id "Tp1g00070.a.x";
-##ch1-1   transdecoder    exon    25584   25704   .       -       .       transcript_id "Tp1g00070.a.x";
-##ch1-1   transdecoder    CDS     25825   26155   .       -       2       transcript_id "Tp1g00070.a.x";
-##ch1-1   transdecoder    exon    25825   26155   .       -       .       transcript_id "Tp1g00070.a.x";
-##ch1-1   transdecoder    CDS     26541   26922   .       -       0       transcript_id "Tp1g00070.a.x";
-##ch1-1   transdecoder    exon    26541   27023   .       -       .       transcript_id "Tp1g00070.a.x";
-##ch1-1   FGenesh++       CDS     26686   26880   27.57   +       0       transcript_id "Tp1g00080";
-##ch1-1   FGenesh++       CDS     27550   27797   10.96   -       2       transcript_id "Tp1g00090";
-##ch1-1   FGenesh++       CDS     28177   28270   13.08   -       0       transcript_id "Tp1g00090";
-##ch1-1   FGenesh++       CDS     28633   29832   2009.22 -       0       transcript_id "Tp1g00100";
-##ch1-1   FGenesh++       CDS     29907   30257   634.46  -       0       transcript_id "Tp1g00100";
+##...
+##ch1-1	phytozomev13	exon	24041	24116	.	+	.	transcript_id "Sp1g00060.1.v2.2"; gene_id "Sp1g00060.v2.2"; gene_name "Sp1g00060";
+##ch1-1	phytozomev13	CDS	24041	24116	.	+	0	transcript_id "Sp1g00060.1.v2.2"; gene_id "Sp1g00060.v2.2"; gene_name "Sp1g00060";
+##ch1-1	phytozomev13	exon	24336	24919	.	+	.	transcript_id "Sp1g00060.1.v2.2"; gene_id "Sp1g00060.v2.2"; gene_name "Sp1g00060";
+##ch1-1	phytozomev13	CDS	24336	24919	.	+	2	transcript_id "Sp1g00060.1.v2.2"; gene_id "Sp1g00060.v2.2"; gene_name "Sp1g00060";
+##ch1-1	phytozomev13	exon	24316	25212	.	-	.	transcript_id "Sp1g00070.1.v2.2"; gene_id "Sp1g00070.v2.2"; gene_name "Sp1g00070";
+##ch1-1	phytozomev13	CDS	25153	25212	.	-	0	transcript_id "Sp1g00070.1.v2.2"; gene_id "Sp1g00070.v2.2"; gene_name "Sp1g00070";
+##ch1-1	phytozomev13	exon	25285	25500	.	-	.	transcript_id "Sp1g00070.1.v2.2"; gene_id "Sp1g00070.v2.2"; gene_name "Sp1g00070";
+##ch1-1	phytozomev13	CDS	25285	25500	.	-	0	transcript_id "Sp1g00070.1.v2.2"; gene_id "Sp1g00070.v2.2"; gene_name "Sp1g00070";
+##ch1-1	phytozomev13	exon	25584	25704	.	-	.	transcript_id "Sp1g00070.1.v2.2"; gene_id "Sp1g00070.v2.2"; gene_name "Sp1g00070";
+##ch1-1	phytozomev13	CDS	25584	25704	.	-	1	transcript_id "Sp1g00070.1.v2.2"; gene_id "Sp1g00070.v2.2"; gene_name "Sp1g00070";
+##ch1-1	phytozomev13	exon	25825	26155	.	-	.	transcript_id "Sp1g00070.1.v2.2"; gene_id "Sp1g00070.v2.2"; gene_name "Sp1g00070";
+##ch1-1	phytozomev13	CDS	25825	26155	.	-	2	transcript_id "Sp1g00070.1.v2.2"; gene_id "Sp1g00070.v2.2"; gene_name "Sp1g00070";
+##ch1-1	phytozomev13	exon	26541	27023	.	-	.	transcript_id "Sp1g00070.1.v2.2"; gene_id "Sp1g00070.v2.2"; gene_name "Sp1g00070";
+##ch1-1	phytozomev13	CDS	26541	26922	.	-	0	transcript_id "Sp1g00070.1.v2.2"; gene_id "Sp1g00070.v2.2"; gene_name "Sp1g00070";
 ##...
 
 parser = argparse.ArgumentParser(description = synopsis1, epilog = synopsis2, formatter_class = RawTextHelpFormatter)
@@ -87,7 +89,8 @@ parser.add_argument('outfile', type=argparse.FileType('w'))
 parser.add_argument('-g', '--gene_id', action="store_true", default=False)
 parser.add_argument('-c', '--collapse', action="store_true", default=False)
 parser.add_argument('-m', dest="margin", type=int, default= -1) 
-parser.add_argument('-r', '--report_overlap', action="store_true", default=False)
+parser.add_argument('-r', '--report_overlap_by_mRNA', action="store_true", default=False)
+parser.add_argument('--report_overlap_by_CDS', action="store_true", default=False)
 parser.add_argument('-l', '--cluster', action="store_true", default=False)
 parser.add_argument('-L', '--Longest_ORF', action="store_true", default=False)
 parser.add_argument('-p', '--protein_coding', action="store_true", default=False)
@@ -125,7 +128,7 @@ nGene = 0
 nCDS = 0
 newline_accepted = 0
 
-print "reading %s as the <input.gtf>:" % args.input_gtf.name
+print( "reading %s as the <input.gtf>:" % args.input_gtf.name )
 
 
 #############################################################
@@ -134,12 +137,13 @@ print "reading %s as the <input.gtf>:" % args.input_gtf.name
 if args.tID_list != "":
 	# 1.5.1 read in the tID.list file
 	tID_set = set()
+	tID_processed_set = set()
 	try:
 		fin_tID_list = open(args.tID_list, 'r')
 		for line in fin_tID_list:
 			tID_set.add(line.split()[0].strip())
 	except:
-		print "Failed to read in %s, exiting..." % fin_tID_list.name
+		print( "Failed to read in %s, exiting..." % fin_tID_list.name )
 		sys.exit()
 	
 	# 1.5.2 print line to outfile if transcriptID is in the set
@@ -159,9 +163,13 @@ if args.tID_list != "":
 						newline_accepted = 1
 			# filter the line that is present in the tID.list
 			if geneID in tID_set:
+				tID_processed_set.add(geneID)
 				args.outfile.write(line) # that's it!!
 		elif line[0] != '#': # ignore header line
-			print "an invalid line detected in %s " % args.input_gtf.name # well, ignore anyway ...
+			print( "an invalid line detected in %s " % args.input_gtf.name ) # well, ignore anyway ...
+	for gID in tID_set:
+		if gID not in tID_processed_set:
+			print( "transcriptID (geneID) not found in the input.gtf: %s" % gID )
 else:			
 	###########################################
 	### 1.2 if '-e' option is off, continue ###
@@ -186,7 +194,7 @@ else:
 						geneID = record.strip().split(' ')[1]
 						newline_accepted = 1
 		except (ValueError, IndexError) :
-			print "There is a non-valid line."
+			print( "There is a non-valid line." )
 			newline_accepted = 0
 		if newline_accepted ==1 and type == "exon" :
 			if geneID not in mRNA_start_dict:
@@ -217,14 +225,14 @@ else:
 				CDS_len_dict[geneID] = CDS_len_dict[geneID] + end - start + 1
 				CDS_nExon_dict[geneID] = CDS_nExon_dict[geneID] + 1
 	
-	print "## %d gene models with 'exon' records and %d with 'CDS' records were found in %s.\n" % (nGene, nCDS, args.input_gtf.name)
+	print( "## %d gene models with 'exon' records and %d with 'CDS' records were found in %s.\n" % (nGene, nCDS, args.input_gtf.name) )
 	args.input_gtf.close()
 	
 	
 	###############################
 	### 2. writing <output.txt> ###
 	###############################
-	print "writing to %s:" % outfile_name
+	print( "writing to %s:" % outfile_name )
 	args.outfile.write("geneID\tChr\tStr\tmRNA_s\tmRNA_e\t#exon_mRNA\tmRNA_l\tCDS_s\tCDS_e\t#exon_CDS\tCDS_l\n")
 	
 	for key in sorted(chr_dict):
@@ -257,27 +265,30 @@ else:
 							"NA" + '\t' + \
 							"0" + '\n' )
 		except (ValueError, IndexError) :
-			print "Something bad just happened while writing, please troubleshoot :p"
+			print( "Something bad just happened while writing, please troubleshoot :p" )
 	#	except KeyError :
 	#		print key		
 	args.outfile.close()
 	
 	## sort the output file
-	print "sorting %s:" % outfile_name
+	print( "sorting %s:" % outfile_name )
 	i = datetime.datetime.now()
 	temp_filename = "parse_gtf_temp_" + i.strftime('%Y%m%d_%H%M%S')
-	subprocess.call("awk 'NR == 1; NR > 1 {print $0 | \"sort -k2,2 -k4,4n -k7,7nr -k11,11nr\"}' " + outfile_name + " > " + temp_filename , shell=True)
+	if args.report_overlap_by_mRNA: # to correctly report overlaps by mRNA, let's sort by "mRNA_start"
+		subprocess.call("awk 'NR == 1; NR > 1 {print $0 | \"sort -k2,2V -k4,4n -k7,7nr -k11,11nr\"}' " + outfile_name + " > " + temp_filename , shell=True)	
+	else: # in other cases, order by "CDS_start"
+		subprocess.call("awk 'NR == 1; NR > 1 {print $0 | \"sort -k2,2V -k8,8n -k11,11nr -k7,7nr\"}' " + outfile_name + " > " + temp_filename , shell=True)
 	subprocess.call("mv " + temp_filename + " " + outfile_name , shell=True)
 	
 	
-	#############################
-	### 3. optional processes ###
-	#############################
+	##########################################
+	### 3. optional post-parsing processes ###
+	##########################################
 	
 	## with -c option
 	if args.collapse == True or args.margin != -1:
-		print "\ncollapsing gene loci with coordinates identical with or nested in other locus in %s:" % outfile_name
-		print "output file before collapsing moved to %s:" % (outfile_name + "_b4collapsing")
+		print( "\ncollapsing gene loci with coordinates identical with or nested in other locus in %s:" % outfile_name )
+		print( "output file before collapsing moved to %s:" % (outfile_name + "_b4collapsing") )
 		subprocess.call("cp " + outfile_name + " " + outfile_name + "_b4collapsing", shell=True)
 	
 		#initializing
@@ -311,11 +322,11 @@ else:
 				if (chr == prev_chr) and (strand == prev_strand) and (mRNA_start < prev_end) and (mRNA_end <= (prev_end + margin)):
 					num_removed += 1
 					if (num_line - 1) > num_line_removed: # report the line kept
-						print prev_line.strip() + "\tline_%d" % (num_line - 1)
+						print( prev_line.strip() + "\tline_%d" % (num_line - 1) )
 					if mRNA_end > prev_end: # mark lines removed by "-m" option
-						print line.strip() + "\tline_%d_removed_-m" % num_line
+						print( line.strip() + "\tline_%d_removed_-m" % num_line )
 					else:
-						print line.strip() + "\tline_%d_removed" % num_line
+						print( line.strip() + "\tline_%d_removed" % num_line )
 					num_line_removed = num_line
 				else:
 					fout_collapsed.write(line)
@@ -327,19 +338,19 @@ else:
 		
 			except (ValueError, IndexError) :
 				if num_line > 1 :
-					print "line %d appears invalid" % num_line
+					print( "line %d appears invalid" % num_line )
 				else:
 					fout_collapsed.write(line)
 	
-		print "\n## removed %d identical/nested entries" % num_removed
+		print( "\n## removed %d identical/nested entries" % num_removed )
 	
 		fin_output.close()
 		fout_collapsed.close()
 		subprocess.call("mv " + temp_filename + " " + outfile_name , shell=True)
 	
 	## with -r option
-	elif args.report_overlap:
-		print "\ndetecting overlapping transcripts (e.g. isoforms) in %s:" % outfile_name
+	elif args.report_overlap_by_mRNA or args.report_overlap_by_CDS:
+		print( "\ndetecting overlapping transcripts (e.g. isoforms) in %s:" % outfile_name )
 	
 		#initializing	
 		fin_output = open(outfile_name, "r")
@@ -359,15 +370,16 @@ else:
 				tok = line.split('\t')
 				chr = tok[1].strip()
 				strand = tok[2].strip()
-				mRNA_start = int(tok[3].strip())
-				mRNA_end = int(tok[4].strip())
-		# if you want to use CDS coordinates to detect overlaps
-		#		mRNA_start = int(tok[7].strip())
-		#		mRNA_end = int(tok[8].strip())
+				if args.report_overlap_by_CDS: # use CDS coordinates to detect overlaps
+					mRNA_start = int(tok[7].strip())
+					mRNA_end = int(tok[8].strip())
+				else:
+					mRNA_start = int(tok[3].strip())
+					mRNA_end = int(tok[4].strip())
 				
 				if (chr == prev_chr) and (strand == prev_strand) and ( mRNA_start < prev_end):
 					num_overlap += 1
-					print line.strip() + "\toverlap: %d in %d" % ( (prev_end - mRNA_start + 1), (mRNA_end - mRNA_start) )
+					print( line.strip() + "\toverlap: %d in %d" % ( (prev_end - mRNA_start + 1), (mRNA_end - mRNA_start) ) )
 					
 				prev_chr = chr
 				prev_strand = strand
@@ -375,15 +387,17 @@ else:
 		
 			except (ValueError, IndexError) :
 				if num_line > 1 :
-					print "line %d appears invalid" % num_line
-		
-		print "\n## found %d overlapping entries" % num_overlap
-		
+					print( "line %d appears invalid" % num_line )
+
+		if args.report_overlap_by_CDS:
+			print( "\n## found %d overlapping entries, based on ORF/CDS models" % num_overlap )
+		else:
+			print( "\n## found %d overlapping entries, based on mRNA/transcript models" % num_overlap )
 		fin_output.close()
 	
 	## with -l or -L option 
 	elif args.cluster or args.Longest_ORF:
-		print "\ndetecting clusters of transcripts in %s, based on genomic locations:" % outfile_name
+		print( "\ndetecting clusters of transcripts in %s, based on genomic locations:" % outfile_name )
 		
 		#initializing	
 		fin_output = open(outfile_name, "r")
@@ -416,7 +430,7 @@ else:
 					mRNA_start = int(tok[3].strip())
 					mRNA_end = int(tok[4].strip())
 				except (ValueError, IndexError) :
-					print "line %d appears invalid" % num_line
+					print( "line %d appears invalid" % num_line )
 				if chr != prev_chr: # fixed in 0.4.1: initialize if new chr
 					prev_end_plus = 0
 					prev_end_minus = 0
@@ -438,15 +452,15 @@ else:
 					fout_clustered.write(line.strip() + "\tm%s\n" % str(num_c_minus).rjust(digit4cIDs, '0'))
 				else: # if neither + or - strand, just print the line
 					fout_clustered.write(line)
-		print "## identified %d and %d clusters in the plus and minus strand, respectively," % (num_c_plus, num_c_minus)	
+		print( "## identified %d and %d clusters in the plus and minus strand, respectively," % (num_c_plus, num_c_minus) )	
 		fin_output.close()
 		fout_clustered.close()
 		
 		if args.Longest_ORF:
 			# this will leave only the line with the longest CDS per each cluster;
-			subprocess.call("sort -k11,11nr " + temp_filename + " | sort -k12,12 -u - | awk 'NR == 1; NR > 1 {print $0 | \"sort -k2,2 -k4,4n\"}' - | cut -f1-11 - > " + outfile_name, shell = True )
+			subprocess.call("sort -k11,11nr " + temp_filename + " | sort -k12,12 -u - | awk 'NR == 1; NR > 1 {print $0 | \"sort -k2,2V -k4,4n\"}' - | cut -f1-11 - > " + outfile_name, shell = True )
 			subprocess.call("rm " + temp_filename , shell=True)
 		else:
 			subprocess.call("mv " + temp_filename + " " + outfile_name , shell=True)
 		
-print "all done\n"
+print( "all done\n" )
